@@ -21,7 +21,7 @@ import (
 // AddTodoPath computes a request path to the add action of todo.
 func AddTodoPath() string {
 
-	return fmt.Sprintf("/")
+	return fmt.Sprintf("/todo")
 }
 
 // AddTodo makes a request to the add action endpoint of the todo resource
@@ -64,7 +64,7 @@ func (c *Client) NewAddTodoRequest(ctx context.Context, path string, payload *To
 // ListTodoPath computes a request path to the list action of todo.
 func ListTodoPath() string {
 
-	return fmt.Sprintf("/")
+	return fmt.Sprintf("/todo")
 }
 
 // ListTodo makes a request to the list action endpoint of the todo resource

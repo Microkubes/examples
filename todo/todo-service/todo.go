@@ -27,7 +27,7 @@ func (c *TodoController) Add(ctx *app.AddTodoContext) error {
 
 	id, err := c.collection.CreateTodo(ctx.Payload)
 	if err != nil {
-		return ctx.InternalServerError()
+		return ctx.InternalServerError(err)
 	}
 	return ctx.OK([]byte(id))
 	// TodoController_Add: end_implement
@@ -35,11 +35,11 @@ func (c *TodoController) Add(ctx *app.AddTodoContext) error {
 
 // List runs the list action.
 func (c *TodoController) List(ctx *app.ListTodoContext) error {
-
+	authObj := auth.GetAuth(ctx.Context)
 	// TodoController_List: start_implement
-	res, err := c.collection.ListTodos()
+	res, err := c.collection.ListTodos(authObj.UserID)
 	if err != nil {
-		return ctx.InternalServerError()
+		return ctx.InternalServerError(err)
 	}
 	return ctx.OK(res)
 	// TodoController_List: end_implement

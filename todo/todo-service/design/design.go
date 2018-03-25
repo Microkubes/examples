@@ -12,25 +12,29 @@ var _ = API("microtodo", func() {
 })
 
 var _ = Resource("todo", func() {
+	Origin("*", func() {
+		Methods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
+	})
 	Action("list", func() {
-		Routing(GET(""))
+		Routing(GET("/todo"))
 		Response(OK, func() {
 			Media(CollectionOf(TodoMedia, func() {
 				View("default")
 			}))
 		})
-		Response(InternalServerError)
+		Response(InternalServerError, ErrorMedia)
 	})
 
 	Action("add", func() {
-		Routing(POST(""))
+		Routing(POST("/todo"))
 		Payload(Todo)
 		Response(OK)
-		Response(BadRequest)
-		Response(InternalServerError)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
 	})
 })
 
+// Todo item
 var Todo = Type("Todo", func() {
 	Attribute("id", String, "The item's unique identifier.")
 	Attribute("title", String, "Todo item title.")
@@ -39,10 +43,9 @@ var Todo = Type("Todo", func() {
 	Attribute("createdAt", DateTime, "Timestamp (milliseconds) when this todo item was created.")
 	Attribute("completedAt", DateTime, "Timestamp (milliseconds) when this todo item was completed.")
 	Attribute("owner", String, "Todo item owner's user ID")
-
-	Required("id", "createdAt")
 })
 
+// TodoMedia is todo item media type
 var TodoMedia = MediaType("application/json", func() {
 	TypeName("TodoMedia")
 

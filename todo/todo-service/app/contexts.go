@@ -47,15 +47,19 @@ func (ctx *AddTodoContext) OK(resp []byte) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *AddTodoContext) BadRequest() error {
-	ctx.ResponseData.WriteHeader(400)
-	return nil
+func (ctx *AddTodoContext) BadRequest(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *AddTodoContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
-	return nil
+func (ctx *AddTodoContext) InternalServerError(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
 // ListTodoContext provides the todo list action context.
@@ -89,7 +93,9 @@ func (ctx *ListTodoContext) OK(r TodoMediaCollection) error {
 }
 
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *ListTodoContext) InternalServerError() error {
-	ctx.ResponseData.WriteHeader(500)
-	return nil
+func (ctx *ListTodoContext) InternalServerError(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }

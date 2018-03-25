@@ -49,7 +49,7 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 	}
 	tmp1 := new(AddTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/"]`,
+		Use:   `todo ["/todo"]`,
 		Short: ``,
 		Long: `
 
@@ -76,7 +76,7 @@ Payload example:
 	}
 	tmp2 := new(ListTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/"]`,
+		Use:   `todo ["/todo"]`,
 		Short: ``,
 		RunE:  func(cmd *cobra.Command, args []string) error { return tmp2.Run(c, args) },
 	}
@@ -245,7 +245,7 @@ func (cmd *AddTodoCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/"
+		path = "/todo"
 	}
 	var payload client.Todo
 	if cmd.Payload != "" {
@@ -278,7 +278,7 @@ func (cmd *ListTodoCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/"
+		path = "/todo"
 	}
 	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
 	ctx := goa.WithLogger(context.Background(), logger)

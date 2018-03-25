@@ -13,6 +13,7 @@ package app
 import (
 	"context"
 	"github.com/goadesign/goa"
+	"github.com/goadesign/goa/cors"
 	"net/http"
 )
 
@@ -42,6 +43,7 @@ type TodoController interface {
 func MountTodoController(service *goa.Service, ctrl TodoController) {
 	initService(service)
 	var h goa.Handler
+	service.Mux.Handle("OPTIONS", "/todo", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -61,8 +63,9 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 		}
 		return ctrl.Add(rctx)
 	}
-	service.Mux.Handle("POST", "/", ctrl.MuxHandler("add", h, unmarshalAddTodoPayload))
-	service.LogInfo("mount", "ctrl", "Todo", "action", "Add", "route", "POST /")
+	h = handleTodoOrigin(h)
+	service.Mux.Handle("POST", "/todo", ctrl.MuxHandler("add", h, unmarshalAddTodoPayload))
+	service.LogInfo("mount", "ctrl", "Todo", "action", "Add", "route", "POST /todo")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -76,19 +79,39 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 		}
 		return ctrl.List(rctx)
 	}
-	service.Mux.Handle("GET", "/", ctrl.MuxHandler("list", h, nil))
-	service.LogInfo("mount", "ctrl", "Todo", "action", "List", "route", "GET /")
+	h = handleTodoOrigin(h)
+	service.Mux.Handle("GET", "/todo", ctrl.MuxHandler("list", h, nil))
+	service.LogInfo("mount", "ctrl", "Todo", "action", "List", "route", "GET /todo")
+}
+
+// handleTodoOrigin applies the CORS response headers corresponding to the origin.
+func handleTodoOrigin(h goa.Handler) goa.Handler {
+
+	return func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		origin := req.Header.Get("Origin")
+		if origin == "" {
+			// Not a CORS request
+			return h(ctx, rw, req)
+		}
+		if cors.MatchOrigin(origin, "*") {
+			ctx = goa.WithLogContext(ctx, "origin", origin)
+			rw.Header().Set("Access-Control-Allow-Origin", origin)
+			rw.Header().Set("Access-Control-Allow-Credentials", "false")
+			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
+				// We are handling a preflight request
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
+			}
+			return h(ctx, rw, req)
+		}
+
+		return h(ctx, rw, req)
+	}
 }
 
 // unmarshalAddTodoPayload unmarshals the request body into the context request data Payload field.
 func unmarshalAddTodoPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
 	payload := &todo{}
 	if err := service.DecodeRequest(req, payload); err != nil {
-		return err
-	}
-	if err := payload.Validate(); err != nil {
-		// Initialize payload with private data structure so it can be logged
-		goa.ContextRequest(ctx).Payload = payload
 		return err
 	}
 	goa.ContextRequest(ctx).Payload = payload.Publicize()

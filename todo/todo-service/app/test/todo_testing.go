@@ -25,15 +25,16 @@ import (
 )
 
 // AddTodoBadRequest runs the method Add of the given controller with the given parameters and payload.
-// It returns the response writer so it's possible to inspect the response headers.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) http.ResponseWriter {
+func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
+		resp   interface{}
 
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) {}
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
 	)
 	if service == nil {
 		service = goatest.Service(&logBuf, respSetter)
@@ -45,67 +46,64 @@ func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.S
 		service.Encoder.Register(newEncoder, "*/*")
 	}
 
-	// Validate payload
-	err := payload.Validate()
-	if err != nil {
-		e, ok := err.(goa.ServiceError)
-		if !ok {
-			panic(err) // bug
-		}
-		t.Errorf("unexpected payload validation error: %+v", e)
-		return nil
-	}
-
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/"),
+		Path: fmt.Sprintf("/todo"),
 	}
-	req, _err := http.NewRequest("POST", u.String(), nil)
-	if _err != nil {
-		panic("invalid test " + _err.Error()) // bug
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, __err := app.NewAddTodoContext(goaCtx, req, service)
-	if __err != nil {
-		_e, _ok := __err.(goa.ServiceError)
-		if !_ok {
-			panic("invalid test data " + __err.Error()) // bug
+	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
 		}
-		t.Errorf("unexpected parameter validation error: %+v", _e)
-		return nil
+		return nil, e
 	}
 	addCtx.Payload = payload
 
 	// Perform action
-	__err = ctrl.Add(addCtx)
+	_err = ctrl.Add(addCtx)
 
 	// Validate response
-	if __err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
 	}
 	if rw.Code != 400 {
 		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
 	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
 
 	// Return results
-	return rw
+	return rw, mt
 }
 
 // AddTodoInternalServerError runs the method Add of the given controller with the given parameters and payload.
-// It returns the response writer so it's possible to inspect the response headers.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) http.ResponseWriter {
+func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
+		resp   interface{}
 
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) {}
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
 	)
 	if service == nil {
 		service = goatest.Service(&logBuf, respSetter)
@@ -117,55 +115,51 @@ func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, servi
 		service.Encoder.Register(newEncoder, "*/*")
 	}
 
-	// Validate payload
-	err := payload.Validate()
-	if err != nil {
-		e, ok := err.(goa.ServiceError)
-		if !ok {
-			panic(err) // bug
-		}
-		t.Errorf("unexpected payload validation error: %+v", e)
-		return nil
-	}
-
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/"),
+		Path: fmt.Sprintf("/todo"),
 	}
-	req, _err := http.NewRequest("POST", u.String(), nil)
-	if _err != nil {
-		panic("invalid test " + _err.Error()) // bug
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, __err := app.NewAddTodoContext(goaCtx, req, service)
-	if __err != nil {
-		_e, _ok := __err.(goa.ServiceError)
-		if !_ok {
-			panic("invalid test data " + __err.Error()) // bug
+	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
 		}
-		t.Errorf("unexpected parameter validation error: %+v", _e)
-		return nil
+		return nil, e
 	}
 	addCtx.Payload = payload
 
 	// Perform action
-	__err = ctrl.Add(addCtx)
+	_err = ctrl.Add(addCtx)
 
 	// Validate response
-	if __err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
 	}
 	if rw.Code != 500 {
 		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
 	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
 
 	// Return results
-	return rw
+	return rw, mt
 }
 
 // AddTodoOK runs the method Add of the given controller with the given parameters and payload.
@@ -189,48 +183,37 @@ func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, 
 		service.Encoder.Register(newEncoder, "*/*")
 	}
 
-	// Validate payload
-	err := payload.Validate()
-	if err != nil {
-		e, ok := err.(goa.ServiceError)
-		if !ok {
-			panic(err) // bug
-		}
-		t.Errorf("unexpected payload validation error: %+v", e)
-		return nil
-	}
-
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/"),
+		Path: fmt.Sprintf("/todo"),
 	}
-	req, _err := http.NewRequest("POST", u.String(), nil)
-	if _err != nil {
-		panic("invalid test " + _err.Error()) // bug
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, __err := app.NewAddTodoContext(goaCtx, req, service)
-	if __err != nil {
-		_e, _ok := __err.(goa.ServiceError)
-		if !_ok {
-			panic("invalid test data " + __err.Error()) // bug
+	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
 		}
-		t.Errorf("unexpected parameter validation error: %+v", _e)
+		t.Errorf("unexpected parameter validation error: %+v", e)
 		return nil
 	}
 	addCtx.Payload = payload
 
 	// Perform action
-	__err = ctrl.Add(addCtx)
+	_err = ctrl.Add(addCtx)
 
 	// Validate response
-	if __err != nil {
-		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
 	}
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
@@ -241,15 +224,16 @@ func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, 
 }
 
 // ListTodoInternalServerError runs the method List of the given controller with the given parameters.
-// It returns the response writer so it's possible to inspect the response headers.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController) http.ResponseWriter {
+func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
+		resp   interface{}
 
-		respSetter goatest.ResponseSetterFunc = func(r interface{}) {}
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
 	)
 	if service == nil {
 		service = goatest.Service(&logBuf, respSetter)
@@ -264,7 +248,7 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/"),
+		Path: fmt.Sprintf("/todo"),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
@@ -281,8 +265,7 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 		if !ok {
 			panic("invalid test data " + _err.Error()) // bug
 		}
-		t.Errorf("unexpected parameter validation error: %+v", e)
-		return nil
+		return nil, e
 	}
 
 	// Perform action
@@ -295,9 +278,17 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 	if rw.Code != 500 {
 		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
 	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
 
 	// Return results
-	return rw
+	return rw, mt
 }
 
 // ListTodoOK runs the method List of the given controller with the given parameters.
@@ -325,7 +316,7 @@ func ListTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service,
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/"),
+		Path: fmt.Sprintf("/todo"),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
