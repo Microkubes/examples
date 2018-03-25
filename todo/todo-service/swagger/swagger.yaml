@@ -6,57 +6,99 @@ consumes:
 definitions:
   Todo:
     example:
-      description: Placeat et culpa sed minus est.
-      title: Reprehenderit officia aut explicabo dolorum.
+      completedAt: 1988-05-02T12:20:46Z
+      createdAt: 2008-04-25T11:36:34Z
+      description: Culpa sed.
+      done: false
+      id: Et reprehenderit officia aut.
+      owner: Dolorum deserunt ad placeat fugiat mollitia reiciendis.
+      title: Nostrum accusantium molestias blanditiis nam.
     properties:
+      completedAt:
+        description: Timestamp (milliseconds) when this todo item was completed.
+        example: 1988-05-02T12:20:46Z
+        format: date-time
+        type: string
+      createdAt:
+        description: Timestamp (milliseconds) when this todo item was created.
+        example: 2008-04-25T11:36:34Z
+        format: date-time
+        type: string
       description:
-        example: Placeat et culpa sed minus est.
+        description: Todo item text.
+        example: Culpa sed.
+        type: string
+      done:
+        description: Is this todo item completed.
+        example: false
+        type: boolean
+      id:
+        description: The item's unique identifier.
+        example: Et reprehenderit officia aut.
+        type: string
+      owner:
+        description: Todo item owner's user ID
+        example: Dolorum deserunt ad placeat fugiat mollitia reiciendis.
         type: string
       title:
-        example: Reprehenderit officia aut explicabo dolorum.
+        description: Todo item title.
+        example: Nostrum accusantium molestias blanditiis nam.
         type: string
+    required:
+    - id
+    - createdAt
     title: Todo
     type: object
   TodoMedia:
     description: TodoMedia media type (default view)
     example:
-      created_at: "1973-08-12T21:19:28Z"
-      description: Occaecati id dolores ut iusto sit.
-      id: Velit sint ipsa.
-      status: Et cumque eum ut suscipit.
+      completedAt: 1973-08-12T21:19:28Z
+      createdAt: 1971-03-28T22:27:26Z
+      description: Id dolores ut iusto sit.
+      done: true
+      id: Sint ipsa.
+      owner: Et cumque eum ut suscipit.
       title: Explicabo et.
     properties:
-      created_at:
-        example: "1973-08-12T21:19:28Z"
+      completedAt:
+        example: 1973-08-12T21:19:28Z
+        format: date-time
+        type: string
+      createdAt:
+        example: 1971-03-28T22:27:26Z
         format: date-time
         type: string
       description:
-        example: Occaecati id dolores ut iusto sit.
+        example: Id dolores ut iusto sit.
         type: string
+      done:
+        example: true
+        type: boolean
       id:
-        example: Velit sint ipsa.
+        example: Sint ipsa.
         type: string
-      status:
+      owner:
         example: Et cumque eum ut suscipit.
         type: string
       title:
         example: Explicabo et.
         type: string
+    required:
+    - id
+    - createdAt
+    - done
     title: 'Mediatype identifier: application/json; view=default'
     type: object
   TodoMediaCollection:
     description: TodoMediaCollection is the media type for an array of TodoMedia (default
       view)
     example:
-    - created_at: "1973-08-12T21:19:28Z"
-      description: Occaecati id dolores ut iusto sit.
-      id: Velit sint ipsa.
-      status: Et cumque eum ut suscipit.
-      title: Explicabo et.
-    - created_at: "1973-08-12T21:19:28Z"
-      description: Occaecati id dolores ut iusto sit.
-      id: Velit sint ipsa.
-      status: Et cumque eum ut suscipit.
+    - completedAt: 1973-08-12T21:19:28Z
+      createdAt: 1971-03-28T22:27:26Z
+      description: Id dolores ut iusto sit.
+      done: true
+      id: Sint ipsa.
+      owner: Et cumque eum ut suscipit.
       title: Explicabo et.
     items:
       $ref: '#/definitions/TodoMedia'

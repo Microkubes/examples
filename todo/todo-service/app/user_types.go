@@ -4,23 +4,66 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/Microkubes/microtodo/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microtodo
+// --design=github.com/Microkubes/examples/todo/todo-service/design
+// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package app
 
+import (
+	"github.com/goadesign/goa"
+	"time"
+)
+
 // todo user type.
 type todo struct {
+	// Timestamp (milliseconds) when this todo item was completed.
+	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" xml:"completedAt,omitempty"`
+	// Timestamp (milliseconds) when this todo item was created.
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	Title       *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+	// Is this todo item completed.
+	Done *bool `form:"done,omitempty" json:"done,omitempty" xml:"done,omitempty"`
+	// The item's unique identifier.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Todo item owner's user ID
+	Owner *string `form:"owner,omitempty" json:"owner,omitempty" xml:"owner,omitempty"`
+	// Todo item title.
+	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+}
+
+// Validate validates the todo type instance.
+func (ut *todo) Validate() (err error) {
+	if ut.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "id"))
+	}
+	if ut.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "createdAt"))
+	}
+	return
 }
 
 // Publicize creates Todo from todo
 func (ut *todo) Publicize() *Todo {
 	var pub Todo
+	if ut.CompletedAt != nil {
+		pub.CompletedAt = ut.CompletedAt
+	}
+	if ut.CreatedAt != nil {
+		pub.CreatedAt = *ut.CreatedAt
+	}
 	if ut.Description != nil {
 		pub.Description = ut.Description
+	}
+	if ut.Done != nil {
+		pub.Done = ut.Done
+	}
+	if ut.ID != nil {
+		pub.ID = *ut.ID
+	}
+	if ut.Owner != nil {
+		pub.Owner = ut.Owner
 	}
 	if ut.Title != nil {
 		pub.Title = ut.Title
@@ -30,6 +73,27 @@ func (ut *todo) Publicize() *Todo {
 
 // Todo user type.
 type Todo struct {
+	// Timestamp (milliseconds) when this todo item was completed.
+	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" xml:"completedAt,omitempty"`
+	// Timestamp (milliseconds) when this todo item was created.
+	CreatedAt time.Time `form:"createdAt" json:"createdAt" xml:"createdAt"`
+	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	Title       *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+	// Is this todo item completed.
+	Done *bool `form:"done,omitempty" json:"done,omitempty" xml:"done,omitempty"`
+	// The item's unique identifier.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Todo item owner's user ID
+	Owner *string `form:"owner,omitempty" json:"owner,omitempty" xml:"owner,omitempty"`
+	// Todo item title.
+	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+}
+
+// Validate validates the Todo type instance.
+func (ut *Todo) Validate() (err error) {
+	if ut.ID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "id"))
+	}
+
+	return
 }

@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/Microkubes/microtodo/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microtodo
+// --design=github.com/Microkubes/examples/todo/todo-service/design
+// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package app
@@ -84,6 +84,11 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 func unmarshalAddTodoPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
 	payload := &todo{}
 	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
 		return err
 	}
 	goa.ContextRequest(ctx).Payload = payload.Publicize()

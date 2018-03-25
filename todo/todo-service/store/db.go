@@ -45,8 +45,9 @@ func (c *TodoCollection) CreateTodo(payload *app.Todo) (string, error) {
 		"_id":         id,
 		"title":       payload.Title,
 		"description": payload.Description,
-		"status":      "not_done",
-		"created_at":  time.Now().UTC(),
+		"done":        payload.Done,
+		"createdAt":   time.Now().UTC(),
+		"owner":       payload.Owner,
 	})
 	if err != nil {
 		return "", err
@@ -58,8 +59,8 @@ func (c *TodoCollection) ListTodos() (app.TodoMediaCollection, error) {
 	var result app.TodoMediaCollection
 	err := c.Collection.Find(bson.M{}).All(&result)
 	for _, todo := range result {
-		bsonId := bson.ObjectId(*todo.ID).Hex()
-		todo.ID = &bsonId
+		bsonId := bson.ObjectId(todo.ID).Hex()
+		todo.ID = bsonId
 	}
 	if err != nil {
 		return nil, err

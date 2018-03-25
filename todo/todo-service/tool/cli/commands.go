@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/Microkubes/microtodo/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microtodo
+// --design=github.com/Microkubes/examples/todo/todo-service/design
+// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package cli
@@ -14,7 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Microkubes/microtodo/client"
+	"github.com/Microkubes/examples/todo/todo-service/client"
 	"github.com/goadesign/goa"
 	goaclient "github.com/goadesign/goa/client"
 	uuid "github.com/goadesign/goa/uuid"
@@ -56,8 +56,13 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 Payload example:
 
 {
-   "description": "Placeat et culpa sed minus est.",
-   "title": "Reprehenderit officia aut explicabo dolorum."
+   "completedAt": "1988-05-02T12:20:46Z",
+   "createdAt": "2008-04-25T11:36:34Z",
+   "description": "Culpa sed.",
+   "done": false,
+   "id": "Et reprehenderit officia aut.",
+   "owner": "Dolorum deserunt ad placeat fugiat mollitia reiciendis.",
+   "title": "Nostrum accusantium molestias blanditiis nam."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}

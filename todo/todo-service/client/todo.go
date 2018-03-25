@@ -4,8 +4,8 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/Microkubes/microtodo/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microtodo
+// --design=github.com/Microkubes/examples/todo/todo-service/design
+// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package client

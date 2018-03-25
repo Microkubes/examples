@@ -4,13 +4,14 @@
 //
 // Command:
 // $ goagen
-// --design=github.com/Microkubes/microtodo/design
-// --out=$(GOPATH)/src/github.com/Microkubes/microtodo
+// --design=github.com/Microkubes/examples/todo/todo-service/design
+// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package client
 
 import (
+	"github.com/goadesign/goa"
 	"net/http"
 	"time"
 )
@@ -19,11 +20,22 @@ import (
 //
 // Identifier: application/json; view=default
 type TodoMedia struct {
-	CreatedAt   *time.Time `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	Description *string    `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	ID          *string    `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
-	Status      *string    `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	Title       *string    `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+	CompletedAt *time.Time `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
+	CreatedAt   time.Time  `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	Description *string    `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
+	Done        bool       `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
+	ID          string     `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
+	Owner       *string    `bson:"owner,omitempty" form:"owner,omitempty" json:"owner,omitempty" yaml:"owner,omitempty"`
+	Title       *string    `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
+}
+
+// Validate validates the TodoMedia media type instance.
+func (mt *TodoMedia) Validate() (err error) {
+	if mt.ID == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "id"))
+	}
+
+	return
 }
 
 // DecodeTodoMedia decodes the TodoMedia instance encoded in resp body.
@@ -37,6 +49,18 @@ func (c *Client) DecodeTodoMedia(resp *http.Response) (*TodoMedia, error) {
 //
 // Identifier: application/json; type=collection; view=default
 type TodoMediaCollection []*TodoMedia
+
+// Validate validates the TodoMediaCollection media type instance.
+func (mt TodoMediaCollection) Validate() (err error) {
+	for _, e := range mt {
+		if e != nil {
+			if err2 := e.Validate(); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
 
 // DecodeTodoMediaCollection decodes the TodoMediaCollection instance encoded in resp body.
 func (c *Client) DecodeTodoMediaCollection(resp *http.Response) (TodoMediaCollection, error) {
