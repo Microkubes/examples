@@ -1,0 +1,123 @@
+consumes:
+- application/json
+- application/xml
+- application/gob
+- application/x-gob
+definitions:
+  Todo:
+    example:
+      description: Placeat et culpa sed minus est.
+      title: Reprehenderit officia aut explicabo dolorum.
+    properties:
+      description:
+        example: Placeat et culpa sed minus est.
+        type: string
+      title:
+        example: Reprehenderit officia aut explicabo dolorum.
+        type: string
+    title: Todo
+    type: object
+  TodoMedia:
+    description: TodoMedia media type (default view)
+    example:
+      created_at: "1973-08-12T21:19:28Z"
+      description: Occaecati id dolores ut iusto sit.
+      id: Velit sint ipsa.
+      status: Et cumque eum ut suscipit.
+      title: Explicabo et.
+    properties:
+      created_at:
+        example: "1973-08-12T21:19:28Z"
+        format: date-time
+        type: string
+      description:
+        example: Occaecati id dolores ut iusto sit.
+        type: string
+      id:
+        example: Velit sint ipsa.
+        type: string
+      status:
+        example: Et cumque eum ut suscipit.
+        type: string
+      title:
+        example: Explicabo et.
+        type: string
+    title: 'Mediatype identifier: application/json; view=default'
+    type: object
+  TodoMediaCollection:
+    description: TodoMediaCollection is the media type for an array of TodoMedia (default
+      view)
+    example:
+    - created_at: "1973-08-12T21:19:28Z"
+      description: Occaecati id dolores ut iusto sit.
+      id: Velit sint ipsa.
+      status: Et cumque eum ut suscipit.
+      title: Explicabo et.
+    - created_at: "1973-08-12T21:19:28Z"
+      description: Occaecati id dolores ut iusto sit.
+      id: Velit sint ipsa.
+      status: Et cumque eum ut suscipit.
+      title: Explicabo et.
+    items:
+      $ref: '#/definitions/TodoMedia'
+    title: 'Mediatype identifier: application/json; type=collection; view=default'
+    type: array
+host: localhost:8080
+info:
+  title: Micro Todo
+  version: ""
+paths:
+  /:
+    get:
+      operationId: todo#list
+      produces:
+      - application/json; type=collection
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TodoMediaCollection'
+        "500":
+          description: Internal Server Error
+      schemes:
+      - http
+      summary: list todo
+      tags:
+      - todo
+    post:
+      operationId: todo#add
+      parameters:
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/Todo'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      schemes:
+      - http
+      summary: add todo
+      tags:
+      - todo
+produces:
+- application/json
+- application/xml
+- application/gob
+- application/x-gob
+responses:
+  BadRequest:
+    description: Bad Request
+  InternalServerError:
+    description: Internal Server Error
+  OK:
+    description: OK
+schemes:
+- http
+swagger: "2.0"
