@@ -3,11 +3,12 @@
 package main
 
 import (
-	"github.com/Microkubes/microtodo/app"
-	"github.com/Microkubes/microtodo/store"
+	"os"
+
+	"github.com/Microkubes/examples/todo/todo-service/app"
+	"github.com/Microkubes/examples/todo/todo-service/store"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
-	"os"
 )
 
 func main() {

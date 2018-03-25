@@ -2,11 +2,12 @@ package store
 
 import (
 	"fmt"
-	"github.com/Microkubes/microtodo/app"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"os"
 	"time"
+
+	"github.com/Microkubes/examples/todo/todo-service/app"
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type TodoCollection struct {
