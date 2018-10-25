@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/Microkubes/microtodo/client"
-	"github.com/Microkubes/microtodo/tool/cli"
-	goaclient "github.com/goadesign/goa/client"
-	"github.com/spf13/cobra"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/Microkubes/examples/todo/todo-service/client"
+	"github.com/Microkubes/examples/todo/todo-service/tool/cli"
+	goaclient "github.com/goadesign/goa/client"
+	"github.com/spf13/cobra"
 )
 
 func main() {

@@ -16,7 +16,7 @@ type TodoCollection struct {
 
 type ITodoCollection interface {
 	CreateTodo(payload *app.Todo) (string, error)
-	ListTodos(owner string) (app.TodoMediaCollection, error)
+	ListTodos() (app.TodoMediaCollection, error)
 }
 
 func NewSession(host string, username string, password string, database string) *mgo.Collection {
@@ -55,11 +55,9 @@ func (c *TodoCollection) CreateTodo(payload *app.Todo) (string, error) {
 	return id.Hex(), nil
 }
 
-func (c *TodoCollection) ListTodos(owner string) (app.TodoMediaCollection, error) {
+func (c *TodoCollection) ListTodos() (app.TodoMediaCollection, error) {
 	var result app.TodoMediaCollection
-	err := c.Collection.Find(bson.M{
-		"owner": owner,
-	}).All(&result)
+	err := c.Collection.Find(bson.M{}).All(&result)
 	for _, todo := range result {
 		bsonId := bson.ObjectId(todo.ID).Hex()
 		todo.ID = bsonId
