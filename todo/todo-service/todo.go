@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/store"
-	"github.com/Microkubes/microservice-security/auth"
 	"github.com/goadesign/goa"
 )
 
@@ -21,9 +20,9 @@ func NewTodoController(service *goa.Service, collection store.ITodoCollection) *
 // Add runs the add action.
 func (c *TodoController) Add(ctx *app.AddTodoContext) error {
 	// TodoController_Add: start_implement
-	authObj := auth.GetAuth(ctx.Context)
+	// authObj := auth.GetAuth(ctx.Context)
 
-	ctx.Payload.Owner = &authObj.UserID
+	// ctx.Payload.Owner = &authObj.UserID
 
 	id, err := c.collection.CreateTodo(ctx.Payload)
 	if err != nil {
@@ -35,9 +34,9 @@ func (c *TodoController) Add(ctx *app.AddTodoContext) error {
 
 // List runs the list action.
 func (c *TodoController) List(ctx *app.ListTodoContext) error {
-	authObj := auth.GetAuth(ctx.Context)
+	// authObj := auth.GetAuth(ctx.Context)
 	// TodoController_List: start_implement
-	res, err := c.collection.ListTodos(authObj.UserID)
+	res, err := c.collection.ListTodos()
 	if err != nil {
 		return ctx.InternalServerError(err)
 	}

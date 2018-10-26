@@ -9,12 +9,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: admin
       MONGO_INITDB_DATABASE: tododb
 
-  microtodo:
+  todo-service:
     build: .
     ports:
       - 8080:8080
     environment:
-      MICROTODO_HOST: mongo
-      MICROTODO_USERNAME: admin
-      MICROTODO_PASSWORD: admin
+      TODO_HOST: mongo
+      TODO_USERNAME: admin
+      TODO_PASSWORD: admin
     restart: always
