@@ -3,10 +3,15 @@
 package main
 
 import (
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/store"
+	"github.com/Microkubes/microservice-tools/config"
+	toolscfg "github.com/Microkubes/microservice-tools/config"
+	"github.com/Microkubes/microservice-tools/gateway"
 	"github.com/goadesign/goa"
 	"github.com/goadesign/goa/middleware"
 )
@@ -14,7 +19,13 @@ import (
 func main() {
 	// Create service
 	service := goa.New("microtodo")
-
+	cfg := loadConfig()
+	httpClient := &http.Client{}
+	registration := gateway.NewKongGateway(cfg.GatewayAdminURL, httpClient, cfg.Service)
+	if err := registration.SelfRegister(); err != nil {
+		log.Fatal("Self registration failed: ", err)
+	}
+	defer registration.Unregister()
 	// securityChain, _, err := flow.NewSecurityFromConfig(&config.ServiceConfig{
 	// 	SecurityConfig: config.SecurityConfig{
 	// 		KeysDir: Getenv("TODO_KEYS_DIR", "keys"),
@@ -58,4 +69,16 @@ func Getenv(variable, defaultValue string) string {
 		return defaultValue
 	}
 	return value
+}
+
+func loadConfig() *config.ServiceConfig {
+	sc := config.ServiceConfig{}
+	confFile := "/run/secrets/microservice_todo_config.json"
+	if os.Getenv("SERVICE_CONFIG_FILE") != "" {
+		confFile = os.Getenv("SERVICE_CONFIG_FILE")
+	}
+	if err := toolscfg.LoadConfigAs(confFile, &sc); err != nil {
+		panic(err)
+	}
+	return &sc
 }
