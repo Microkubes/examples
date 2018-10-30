@@ -14,30 +14,88 @@ import (
 	"context"
 	"github.com/goadesign/goa"
 	"net/http"
+	"strconv"
 )
 
-// AddTodoContext provides the todo add action context.
-type AddTodoContext struct {
+// AddTodoTodoContext provides the todo addTodo action context.
+type AddTodoTodoContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
-	Payload *Todo
+	Payload *TodoPayload
 }
 
-// NewAddTodoContext parses the incoming request URL and body, performs validations and creates the
-// context used by the todo controller add action.
-func NewAddTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*AddTodoContext, error) {
+// NewAddTodoTodoContext parses the incoming request URL and body, performs validations and creates the
+// context used by the todo controller addTodo action.
+func NewAddTodoTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*AddTodoTodoContext, error) {
 	var err error
 	resp := goa.ContextResponse(ctx)
 	resp.Service = service
 	req := goa.ContextRequest(ctx)
 	req.Request = r
-	rctx := AddTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	rctx := AddTodoTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	return &rctx, err
+}
+
+// Created sends a HTTP response with status code 201.
+func (ctx *AddTodoTodoContext) Created(r *TodoMedia) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 201, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *AddTodoTodoContext) BadRequest(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *AddTodoTodoContext) NotFound(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *AddTodoTodoContext) InternalServerError(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// DeleteTodoTodoContext provides the todo deleteTodo action context.
+type DeleteTodoTodoContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	TodoID string
+}
+
+// NewDeleteTodoTodoContext parses the incoming request URL and body, performs validations and creates the
+// context used by the todo controller deleteTodo action.
+func NewDeleteTodoTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*DeleteTodoTodoContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := DeleteTodoTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramTodoID := req.Params["todoID"]
+	if len(paramTodoID) > 0 {
+		rawTodoID := paramTodoID[0]
+		rctx.TodoID = rawTodoID
+	}
 	return &rctx, err
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *AddTodoContext) OK(resp []byte) error {
+func (ctx *DeleteTodoTodoContext) OK(resp []byte) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
 		ctx.ResponseData.Header().Set("Content-Type", "text/plain")
 	}
@@ -47,53 +105,232 @@ func (ctx *AddTodoContext) OK(resp []byte) error {
 }
 
 // BadRequest sends a HTTP response with status code 400.
-func (ctx *AddTodoContext) BadRequest(r error) error {
+func (ctx *DeleteTodoTodoContext) BadRequest(r error) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
 		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
+// NotFound sends a HTTP response with status code 404.
+func (ctx *DeleteTodoTodoContext) NotFound(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *AddTodoContext) InternalServerError(r error) error {
+func (ctx *DeleteTodoTodoContext) InternalServerError(r error) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
 		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
 }
 
-// ListTodoContext provides the todo list action context.
-type ListTodoContext struct {
+// GetAllTodosTodoContext provides the todo getAllTodos action context.
+type GetAllTodosTodoContext struct {
 	context.Context
 	*goa.ResponseData
 	*goa.RequestData
+	Limit   *int
+	Offset  *int
+	Order   *string
+	Sorting *string
 }
 
-// NewListTodoContext parses the incoming request URL and body, performs validations and creates the
-// context used by the todo controller list action.
-func NewListTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*ListTodoContext, error) {
+// NewGetAllTodosTodoContext parses the incoming request URL and body, performs validations and creates the
+// context used by the todo controller getAllTodos action.
+func NewGetAllTodosTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*GetAllTodosTodoContext, error) {
 	var err error
 	resp := goa.ContextResponse(ctx)
 	resp.Service = service
 	req := goa.ContextRequest(ctx)
 	req.Request = r
-	rctx := ListTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	rctx := GetAllTodosTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramLimit := req.Params["limit"]
+	if len(paramLimit) > 0 {
+		rawLimit := paramLimit[0]
+		if limit, err2 := strconv.Atoi(rawLimit); err2 == nil {
+			tmp2 := limit
+			tmp1 := &tmp2
+			rctx.Limit = tmp1
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("limit", rawLimit, "integer"))
+		}
+	}
+	paramOffset := req.Params["offset"]
+	if len(paramOffset) > 0 {
+		rawOffset := paramOffset[0]
+		if offset, err2 := strconv.Atoi(rawOffset); err2 == nil {
+			tmp4 := offset
+			tmp3 := &tmp4
+			rctx.Offset = tmp3
+		} else {
+			err = goa.MergeErrors(err, goa.InvalidParamTypeError("offset", rawOffset, "integer"))
+		}
+	}
+	paramOrder := req.Params["order"]
+	if len(paramOrder) > 0 {
+		rawOrder := paramOrder[0]
+		rctx.Order = &rawOrder
+	}
+	paramSorting := req.Params["sorting"]
+	if len(paramSorting) > 0 {
+		rawSorting := paramSorting[0]
+		rctx.Sorting = &rawSorting
+		if rctx.Sorting != nil {
+			if !(*rctx.Sorting == "asc" || *rctx.Sorting == "desc") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError(`sorting`, *rctx.Sorting, []interface{}{"asc", "desc"}))
+			}
+		}
+	}
 	return &rctx, err
 }
 
 // OK sends a HTTP response with status code 200.
-func (ctx *ListTodoContext) OK(r TodoMediaCollection) error {
+func (ctx *GetAllTodosTodoContext) OK(resp []byte) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
-		ctx.ResponseData.Header().Set("Content-Type", "application/json; type=collection")
+		ctx.ResponseData.Header().Set("Content-Type", "text/plain")
 	}
-	if r == nil {
-		r = TodoMediaCollection{}
+	ctx.ResponseData.WriteHeader(200)
+	_, err := ctx.ResponseData.Write(resp)
+	return err
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *GetAllTodosTodoContext) BadRequest(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *GetAllTodosTodoContext) NotFound(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *GetAllTodosTodoContext) InternalServerError(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// GetByIDTodoContext provides the todo getById action context.
+type GetByIDTodoContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	TodoID string
+}
+
+// NewGetByIDTodoContext parses the incoming request URL and body, performs validations and creates the
+// context used by the todo controller getById action.
+func NewGetByIDTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*GetByIDTodoContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := GetByIDTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramTodoID := req.Params["todoID"]
+	if len(paramTodoID) > 0 {
+		rawTodoID := paramTodoID[0]
+		rctx.TodoID = rawTodoID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *GetByIDTodoContext) OK(r *TodoMedia) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
 }
 
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *GetByIDTodoContext) BadRequest(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *GetByIDTodoContext) NotFound(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
 // InternalServerError sends a HTTP response with status code 500.
-func (ctx *ListTodoContext) InternalServerError(r error) error {
+func (ctx *GetByIDTodoContext) InternalServerError(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
+}
+
+// UpdateTodoTodoContext provides the todo updateTodo action context.
+type UpdateTodoTodoContext struct {
+	context.Context
+	*goa.ResponseData
+	*goa.RequestData
+	TodoID  string
+	Payload *TodoUpdatePayload
+}
+
+// NewUpdateTodoTodoContext parses the incoming request URL and body, performs validations and creates the
+// context used by the todo controller updateTodo action.
+func NewUpdateTodoTodoContext(ctx context.Context, r *http.Request, service *goa.Service) (*UpdateTodoTodoContext, error) {
+	var err error
+	resp := goa.ContextResponse(ctx)
+	resp.Service = service
+	req := goa.ContextRequest(ctx)
+	req.Request = r
+	rctx := UpdateTodoTodoContext{Context: ctx, ResponseData: resp, RequestData: req}
+	paramTodoID := req.Params["todoID"]
+	if len(paramTodoID) > 0 {
+		rawTodoID := paramTodoID[0]
+		rctx.TodoID = rawTodoID
+	}
+	return &rctx, err
+}
+
+// OK sends a HTTP response with status code 200.
+func (ctx *UpdateTodoTodoContext) OK(r *TodoMedia) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/json")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
+}
+
+// BadRequest sends a HTTP response with status code 400.
+func (ctx *UpdateTodoTodoContext) BadRequest(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
+}
+
+// NotFound sends a HTTP response with status code 404.
+func (ctx *UpdateTodoTodoContext) NotFound(r error) error {
+	if ctx.ResponseData.Header().Get("Content-Type") == "" {
+		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
+	}
+	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
+}
+
+// InternalServerError sends a HTTP response with status code 500.
+func (ctx *UpdateTodoTodoContext) InternalServerError(r error) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
 		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
 	}

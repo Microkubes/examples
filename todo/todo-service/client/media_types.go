@@ -13,20 +13,18 @@ package client
 import (
 	"github.com/goadesign/goa"
 	"net/http"
-	"time"
 )
 
 // TodoMedia media type (default view)
 //
 // Identifier: application/json; view=default
 type TodoMedia struct {
-	CompletedAt *time.Time `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
-	CreatedAt   time.Time  `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
-	Description *string    `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
-	Done        bool       `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
-	ID          string     `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
-	Owner       *string    `bson:"owner,omitempty" form:"owner,omitempty" json:"owner,omitempty" yaml:"owner,omitempty"`
-	Title       *string    `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
+	CompletedAt *int    `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
+	CreatedAt   int     `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	Description *string `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
+	Done        bool    `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
+	ID          string  `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
+	Title       *string `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
 }
 
 // Validate validates the TodoMedia media type instance.
@@ -43,30 +41,6 @@ func (c *Client) DecodeTodoMedia(resp *http.Response) (*TodoMedia, error) {
 	var decoded TodoMedia
 	err := c.Decoder.Decode(&decoded, resp.Body, resp.Header.Get("Content-Type"))
 	return &decoded, err
-}
-
-// TodoMediaCollection is the media type for an array of TodoMedia (default view)
-//
-// Identifier: application/json; type=collection; view=default
-type TodoMediaCollection []*TodoMedia
-
-// Validate validates the TodoMediaCollection media type instance.
-func (mt TodoMediaCollection) Validate() (err error) {
-	for _, e := range mt {
-		if e != nil {
-			if err2 := e.Validate(); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-	}
-	return
-}
-
-// DecodeTodoMediaCollection decodes the TodoMediaCollection instance encoded in resp body.
-func (c *Client) DecodeTodoMediaCollection(resp *http.Response) (TodoMediaCollection, error) {
-	var decoded TodoMediaCollection
-	err := c.Decoder.Decode(&decoded, resp.Body, resp.Header.Get("Content-Type"))
-	return decoded, err
 }
 
 // DecodeErrorResponse decodes the ErrorResponse instance encoded in resp body.

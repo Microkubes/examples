@@ -6,6 +6,7 @@ RUN apk add --no-cache curl git openssh
 RUN go get -u -v github.com/goadesign/goa/...
 RUN go get -u -v github.com/globalsign/mgo
 RUN go get -u -v github.com/Microkubes/microservice-tools/...
+RUN go get -u -v github.com/JormungandrK/backends
 
 COPY . /go/src/github.com/Microkubes/examples/todo/todo-service
 

@@ -20,6 +20,7 @@ import (
 	uuid "github.com/goadesign/goa/uuid"
 	"github.com/spf13/cobra"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -27,15 +28,45 @@ import (
 )
 
 type (
-	// AddTodoCommand is the command line data structure for the add action of todo
-	AddTodoCommand struct {
+	// AddTodoTodoCommand is the command line data structure for the addTodo action of todo
+	AddTodoTodoCommand struct {
 		Payload     string
 		ContentType string
 		PrettyPrint bool
 	}
 
-	// ListTodoCommand is the command line data structure for the list action of todo
-	ListTodoCommand struct {
+	// DeleteTodoTodoCommand is the command line data structure for the deleteTodo action of todo
+	DeleteTodoTodoCommand struct {
+		// Todo ID
+		TodoID      string
+		PrettyPrint bool
+	}
+
+	// GetAllTodosTodoCommand is the command line data structure for the getAllTodos action of todo
+	GetAllTodosTodoCommand struct {
+		// Limit todos per page
+		Limit int
+		// number of todos to skip
+		Offset int
+		// order by
+		Order       string
+		Sorting     string
+		PrettyPrint bool
+	}
+
+	// GetByIDTodoCommand is the command line data structure for the getById action of todo
+	GetByIDTodoCommand struct {
+		// Todo ID
+		TodoID      string
+		PrettyPrint bool
+	}
+
+	// UpdateTodoTodoCommand is the command line data structure for the updateTodo action of todo
+	UpdateTodoTodoCommand struct {
+		Payload     string
+		ContentType string
+		// Todo ID
+		TodoID      string
 		PrettyPrint bool
 	}
 )
@@ -44,25 +75,20 @@ type (
 func RegisterCommands(app *cobra.Command, c *client.Client) {
 	var command, sub *cobra.Command
 	command = &cobra.Command{
-		Use:   "add",
-		Short: ``,
+		Use:   "add-todo",
+		Short: `Add new todo`,
 	}
-	tmp1 := new(AddTodoCommand)
+	tmp1 := new(AddTodoTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/todo"]`,
+		Use:   `todo ["/todo/add"]`,
 		Short: ``,
 		Long: `
 
 Payload example:
 
 {
-   "completedAt": "1988-05-02T12:20:46Z",
-   "createdAt": "2008-04-25T11:36:34Z",
-   "description": "Culpa sed.",
-   "done": false,
-   "id": "Et reprehenderit officia aut.",
-   "owner": "Dolorum deserunt ad placeat fugiat mollitia reiciendis.",
-   "title": "Nostrum accusantium molestias blanditiis nam."
+   "description": "Explicabo et.",
+   "title": "Enim placeat et culpa sed minus."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
@@ -71,17 +97,68 @@ Payload example:
 	command.AddCommand(sub)
 	app.AddCommand(command)
 	command = &cobra.Command{
-		Use:   "list",
-		Short: ``,
+		Use:   "delete-todo",
+		Short: `Delete todo`,
 	}
-	tmp2 := new(ListTodoCommand)
+	tmp2 := new(DeleteTodoTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/todo"]`,
+		Use:   `todo ["/todo/TODOID/delete"]`,
 		Short: ``,
 		RunE:  func(cmd *cobra.Command, args []string) error { return tmp2.Run(c, args) },
 	}
 	tmp2.RegisterFlags(sub, c)
 	sub.PersistentFlags().BoolVar(&tmp2.PrettyPrint, "pp", false, "Pretty print response body")
+	command.AddCommand(sub)
+	app.AddCommand(command)
+	command = &cobra.Command{
+		Use:   "get-all-todos",
+		Short: `Get all todos`,
+	}
+	tmp3 := new(GetAllTodosTodoCommand)
+	sub = &cobra.Command{
+		Use:   `todo ["/todo/all"]`,
+		Short: ``,
+		RunE:  func(cmd *cobra.Command, args []string) error { return tmp3.Run(c, args) },
+	}
+	tmp3.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp3.PrettyPrint, "pp", false, "Pretty print response body")
+	command.AddCommand(sub)
+	app.AddCommand(command)
+	command = &cobra.Command{
+		Use:   "get-byid",
+		Short: `Get todo by ID`,
+	}
+	tmp4 := new(GetByIDTodoCommand)
+	sub = &cobra.Command{
+		Use:   `todo ["/todo/TODOID"]`,
+		Short: ``,
+		RunE:  func(cmd *cobra.Command, args []string) error { return tmp4.Run(c, args) },
+	}
+	tmp4.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp4.PrettyPrint, "pp", false, "Pretty print response body")
+	command.AddCommand(sub)
+	app.AddCommand(command)
+	command = &cobra.Command{
+		Use:   "update-todo",
+		Short: `Update todo`,
+	}
+	tmp5 := new(UpdateTodoTodoCommand)
+	sub = &cobra.Command{
+		Use:   `todo [("/todo/TODOID"|"/todo/TODOID")]`,
+		Short: ``,
+		Long: `
+
+Payload example:
+
+{
+   "description": "Et reprehenderit officia aut.",
+   "done": true,
+   "title": "Deserunt ad placeat."
+}`,
+		RunE: func(cmd *cobra.Command, args []string) error { return tmp5.Run(c, args) },
+	}
+	tmp5.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp5.PrettyPrint, "pp", false, "Pretty print response body")
 	command.AddCommand(sub)
 	app.AddCommand(command)
 }
@@ -239,15 +316,15 @@ func boolArray(ins []string) ([]bool, error) {
 	return vals, nil
 }
 
-// Run makes the HTTP request corresponding to the AddTodoCommand command.
-func (cmd *AddTodoCommand) Run(c *client.Client, args []string) error {
+// Run makes the HTTP request corresponding to the AddTodoTodoCommand command.
+func (cmd *AddTodoTodoCommand) Run(c *client.Client, args []string) error {
 	var path string
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/todo"
+		path = "/todo/add"
 	}
-	var payload client.Todo
+	var payload client.TodoPayload
 	if cmd.Payload != "" {
 		err := json.Unmarshal([]byte(cmd.Payload), &payload)
 		if err != nil {
@@ -256,7 +333,7 @@ func (cmd *AddTodoCommand) Run(c *client.Client, args []string) error {
 	}
 	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
 	ctx := goa.WithLogger(context.Background(), logger)
-	resp, err := c.AddTodo(ctx, path, &payload, cmd.ContentType)
+	resp, err := c.AddTodoTodo(ctx, path, &payload, cmd.ContentType)
 	if err != nil {
 		goa.LogError(ctx, "failed", "err", err)
 		return err
@@ -267,22 +344,22 @@ func (cmd *AddTodoCommand) Run(c *client.Client, args []string) error {
 }
 
 // RegisterFlags registers the command flags with the command line.
-func (cmd *AddTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+func (cmd *AddTodoTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
 	cc.Flags().StringVar(&cmd.Payload, "payload", "", "Request body encoded in JSON")
 	cc.Flags().StringVar(&cmd.ContentType, "content", "", "Request content type override, e.g. 'application/x-www-form-urlencoded'")
 }
 
-// Run makes the HTTP request corresponding to the ListTodoCommand command.
-func (cmd *ListTodoCommand) Run(c *client.Client, args []string) error {
+// Run makes the HTTP request corresponding to the DeleteTodoTodoCommand command.
+func (cmd *DeleteTodoTodoCommand) Run(c *client.Client, args []string) error {
 	var path string
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/todo"
+		path = fmt.Sprintf("/todo/%v/delete", url.QueryEscape(cmd.TodoID))
 	}
 	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
 	ctx := goa.WithLogger(context.Background(), logger)
-	resp, err := c.ListTodo(ctx, path)
+	resp, err := c.DeleteTodoTodo(ctx, path)
 	if err != nil {
 		goa.LogError(ctx, "failed", "err", err)
 		return err
@@ -293,5 +370,100 @@ func (cmd *ListTodoCommand) Run(c *client.Client, args []string) error {
 }
 
 // RegisterFlags registers the command flags with the command line.
-func (cmd *ListTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+func (cmd *DeleteTodoTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	var todoID string
+	cc.Flags().StringVar(&cmd.TodoID, "todoID", todoID, `Todo ID`)
+}
+
+// Run makes the HTTP request corresponding to the GetAllTodosTodoCommand command.
+func (cmd *GetAllTodosTodoCommand) Run(c *client.Client, args []string) error {
+	var path string
+	if len(args) > 0 {
+		path = args[0]
+	} else {
+		path = "/todo/all"
+	}
+	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
+	ctx := goa.WithLogger(context.Background(), logger)
+	resp, err := c.GetAllTodosTodo(ctx, path, intFlagVal("limit", cmd.Limit), intFlagVal("offset", cmd.Offset), stringFlagVal("order", cmd.Order), stringFlagVal("sorting", cmd.Sorting))
+	if err != nil {
+		goa.LogError(ctx, "failed", "err", err)
+		return err
+	}
+
+	goaclient.HandleResponse(c.Client, resp, cmd.PrettyPrint)
+	return nil
+}
+
+// RegisterFlags registers the command flags with the command line.
+func (cmd *GetAllTodosTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	var limit int
+	cc.Flags().IntVar(&cmd.Limit, "limit", limit, `Limit todos per page`)
+	var offset int
+	cc.Flags().IntVar(&cmd.Offset, "offset", offset, `number of todos to skip`)
+	var order string
+	cc.Flags().StringVar(&cmd.Order, "order", order, `order by`)
+	var sorting string
+	cc.Flags().StringVar(&cmd.Sorting, "sorting", sorting, ``)
+}
+
+// Run makes the HTTP request corresponding to the GetByIDTodoCommand command.
+func (cmd *GetByIDTodoCommand) Run(c *client.Client, args []string) error {
+	var path string
+	if len(args) > 0 {
+		path = args[0]
+	} else {
+		path = fmt.Sprintf("/todo/%v", url.QueryEscape(cmd.TodoID))
+	}
+	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
+	ctx := goa.WithLogger(context.Background(), logger)
+	resp, err := c.GetByIDTodo(ctx, path)
+	if err != nil {
+		goa.LogError(ctx, "failed", "err", err)
+		return err
+	}
+
+	goaclient.HandleResponse(c.Client, resp, cmd.PrettyPrint)
+	return nil
+}
+
+// RegisterFlags registers the command flags with the command line.
+func (cmd *GetByIDTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	var todoID string
+	cc.Flags().StringVar(&cmd.TodoID, "todoID", todoID, `Todo ID`)
+}
+
+// Run makes the HTTP request corresponding to the UpdateTodoTodoCommand command.
+func (cmd *UpdateTodoTodoCommand) Run(c *client.Client, args []string) error {
+	var path string
+	if len(args) > 0 {
+		path = args[0]
+	} else {
+		path = fmt.Sprintf("/todo/%v", url.QueryEscape(cmd.TodoID))
+	}
+	var payload client.TodoUpdatePayload
+	if cmd.Payload != "" {
+		err := json.Unmarshal([]byte(cmd.Payload), &payload)
+		if err != nil {
+			return fmt.Errorf("failed to deserialize payload: %s", err)
+		}
+	}
+	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
+	ctx := goa.WithLogger(context.Background(), logger)
+	resp, err := c.UpdateTodoTodo(ctx, path, &payload, cmd.ContentType)
+	if err != nil {
+		goa.LogError(ctx, "failed", "err", err)
+		return err
+	}
+
+	goaclient.HandleResponse(c.Client, resp, cmd.PrettyPrint)
+	return nil
+}
+
+// RegisterFlags registers the command flags with the command line.
+func (cmd *UpdateTodoTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	cc.Flags().StringVar(&cmd.Payload, "payload", "", "Request body encoded in JSON")
+	cc.Flags().StringVar(&cmd.ContentType, "content", "", "Request content type override, e.g. 'application/x-www-form-urlencoded'")
+	var todoID string
+	cc.Flags().StringVar(&cmd.TodoID, "todoID", todoID, `Todo ID`)
 }

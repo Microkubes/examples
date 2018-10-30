@@ -16,25 +16,26 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
-// AddTodoPath computes a request path to the add action of todo.
-func AddTodoPath() string {
+// AddTodoTodoPath computes a request path to the addTodo action of todo.
+func AddTodoTodoPath() string {
 
-	return fmt.Sprintf("/todo")
+	return fmt.Sprintf("/todo/add")
 }
 
-// AddTodo makes a request to the add action endpoint of the todo resource
-func (c *Client) AddTodo(ctx context.Context, path string, payload *Todo, contentType string) (*http.Response, error) {
-	req, err := c.NewAddTodoRequest(ctx, path, payload, contentType)
+// Add new todo
+func (c *Client) AddTodoTodo(ctx context.Context, path string, payload *TodoPayload, contentType string) (*http.Response, error) {
+	req, err := c.NewAddTodoTodoRequest(ctx, path, payload, contentType)
 	if err != nil {
 		return nil, err
 	}
 	return c.Client.Do(ctx, req)
 }
 
-// NewAddTodoRequest create the request corresponding to the add action endpoint of the todo resource.
-func (c *Client) NewAddTodoRequest(ctx context.Context, path string, payload *Todo, contentType string) (*http.Request, error) {
+// NewAddTodoTodoRequest create the request corresponding to the addTodo action endpoint of the todo resource.
+func (c *Client) NewAddTodoTodoRequest(ctx context.Context, path string, payload *TodoPayload, contentType string) (*http.Request, error) {
 	var body bytes.Buffer
 	if contentType == "" {
 		contentType = "*/*" // Use default encoder
@@ -61,23 +62,99 @@ func (c *Client) NewAddTodoRequest(ctx context.Context, path string, payload *To
 	return req, nil
 }
 
-// ListTodoPath computes a request path to the list action of todo.
-func ListTodoPath() string {
+// DeleteTodoTodoPath computes a request path to the deleteTodo action of todo.
+func DeleteTodoTodoPath(todoID string) string {
+	param0 := todoID
 
-	return fmt.Sprintf("/todo")
+	return fmt.Sprintf("/todo/%s/delete", param0)
 }
 
-// ListTodo makes a request to the list action endpoint of the todo resource
-func (c *Client) ListTodo(ctx context.Context, path string) (*http.Response, error) {
-	req, err := c.NewListTodoRequest(ctx, path)
+// Delete todo
+func (c *Client) DeleteTodoTodo(ctx context.Context, path string) (*http.Response, error) {
+	req, err := c.NewDeleteTodoTodoRequest(ctx, path)
 	if err != nil {
 		return nil, err
 	}
 	return c.Client.Do(ctx, req)
 }
 
-// NewListTodoRequest create the request corresponding to the list action endpoint of the todo resource.
-func (c *Client) NewListTodoRequest(ctx context.Context, path string) (*http.Request, error) {
+// NewDeleteTodoTodoRequest create the request corresponding to the deleteTodo action endpoint of the todo resource.
+func (c *Client) NewDeleteTodoTodoRequest(ctx context.Context, path string) (*http.Request, error) {
+	scheme := c.Scheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+// GetAllTodosTodoPath computes a request path to the getAllTodos action of todo.
+func GetAllTodosTodoPath() string {
+
+	return fmt.Sprintf("/todo/all")
+}
+
+// Get all todos
+func (c *Client) GetAllTodosTodo(ctx context.Context, path string, limit *int, offset *int, order *string, sorting *string) (*http.Response, error) {
+	req, err := c.NewGetAllTodosTodoRequest(ctx, path, limit, offset, order, sorting)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(ctx, req)
+}
+
+// NewGetAllTodosTodoRequest create the request corresponding to the getAllTodos action endpoint of the todo resource.
+func (c *Client) NewGetAllTodosTodoRequest(ctx context.Context, path string, limit *int, offset *int, order *string, sorting *string) (*http.Request, error) {
+	scheme := c.Scheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
+	values := u.Query()
+	if limit != nil {
+		tmp6 := strconv.Itoa(*limit)
+		values.Set("limit", tmp6)
+	}
+	if offset != nil {
+		tmp7 := strconv.Itoa(*offset)
+		values.Set("offset", tmp7)
+	}
+	if order != nil {
+		values.Set("order", *order)
+	}
+	if sorting != nil {
+		values.Set("sorting", *sorting)
+	}
+	u.RawQuery = values.Encode()
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+// GetByIDTodoPath computes a request path to the getById action of todo.
+func GetByIDTodoPath(todoID string) string {
+	param0 := todoID
+
+	return fmt.Sprintf("/todo/%s", param0)
+}
+
+// Get todo by ID
+func (c *Client) GetByIDTodo(ctx context.Context, path string) (*http.Response, error) {
+	req, err := c.NewGetByIDTodoRequest(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(ctx, req)
+}
+
+// NewGetByIDTodoRequest create the request corresponding to the getById action endpoint of the todo resource.
+func (c *Client) NewGetByIDTodoRequest(ctx context.Context, path string) (*http.Request, error) {
 	scheme := c.Scheme
 	if scheme == "" {
 		scheme = "http"
@@ -86,6 +163,57 @@ func (c *Client) NewListTodoRequest(ctx context.Context, path string) (*http.Req
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+	return req, nil
+}
+
+// UpdateTodoTodoPath computes a request path to the updateTodo action of todo.
+func UpdateTodoTodoPath(todoID string) string {
+	param0 := todoID
+
+	return fmt.Sprintf("/todo/%s", param0)
+}
+
+// UpdateTodoTodoPath2 computes a request path to the updateTodo action of todo.
+func UpdateTodoTodoPath2(todoID string) string {
+	param0 := todoID
+
+	return fmt.Sprintf("/todo/%s", param0)
+}
+
+// Update todo
+func (c *Client) UpdateTodoTodo(ctx context.Context, path string, payload *TodoUpdatePayload, contentType string) (*http.Response, error) {
+	req, err := c.NewUpdateTodoTodoRequest(ctx, path, payload, contentType)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(ctx, req)
+}
+
+// NewUpdateTodoTodoRequest create the request corresponding to the updateTodo action endpoint of the todo resource.
+func (c *Client) NewUpdateTodoTodoRequest(ctx context.Context, path string, payload *TodoUpdatePayload, contentType string) (*http.Request, error) {
+	var body bytes.Buffer
+	if contentType == "" {
+		contentType = "*/*" // Use default encoder
+	}
+	err := c.Encoder.Encode(payload, &body, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode body: %s", err)
+	}
+	scheme := c.Scheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
+	req, err := http.NewRequest("PUT", u.String(), &body)
+	if err != nil {
+		return nil, err
+	}
+	header := req.Header
+	if contentType == "*/*" {
+		header.Set("Content-Type", "application/json")
+	} else {
+		header.Set("Content-Type", contentType)
 	}
 	return req, nil
 }

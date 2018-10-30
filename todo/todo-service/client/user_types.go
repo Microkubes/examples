@@ -11,25 +11,24 @@
 package client
 
 import (
+	"github.com/goadesign/goa"
 	"time"
 )
 
 // todo user type.
 type todo struct {
 	// Timestamp (milliseconds) when this todo item was completed.
-	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" xml:"completedAt,omitempty"`
+	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
 	// Todo item text.
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.
-	Done *bool `form:"done,omitempty" json:"done,omitempty" xml:"done,omitempty"`
+	Done *bool `form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty" xml:"done,omitempty"`
 	// The item's unique identifier.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Todo item owner's user ID
-	Owner *string `form:"owner,omitempty" json:"owner,omitempty" xml:"owner,omitempty"`
+	ID *string `form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty" xml:"id,omitempty"`
 	// Todo item title.
-	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+	Title *string `form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
 }
 
 // Publicize creates Todo from todo
@@ -50,9 +49,6 @@ func (ut *todo) Publicize() *Todo {
 	if ut.ID != nil {
 		pub.ID = ut.ID
 	}
-	if ut.Owner != nil {
-		pub.Owner = ut.Owner
-	}
 	if ut.Title != nil {
 		pub.Title = ut.Title
 	}
@@ -62,17 +58,100 @@ func (ut *todo) Publicize() *Todo {
 // Todo user type.
 type Todo struct {
 	// Timestamp (milliseconds) when this todo item was completed.
-	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" xml:"completedAt,omitempty"`
+	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
-	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
 	// Todo item text.
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.
-	Done *bool `form:"done,omitempty" json:"done,omitempty" xml:"done,omitempty"`
+	Done *bool `form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty" xml:"done,omitempty"`
 	// The item's unique identifier.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Todo item owner's user ID
-	Owner *string `form:"owner,omitempty" json:"owner,omitempty" xml:"owner,omitempty"`
+	ID *string `form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty" xml:"id,omitempty"`
 	// Todo item title.
-	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
+	Title *string `form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
+}
+
+// Todo payload
+type todoPayload struct {
+	// Todo description
+	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
+	// Todo title
+	Title *string `form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
+}
+
+// Validate validates the todoPayload type instance.
+func (ut *todoPayload) Validate() (err error) {
+	if ut.Title == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "title"))
+	}
+	if ut.Description == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "description"))
+	}
+	return
+}
+
+// Publicize creates TodoPayload from todoPayload
+func (ut *todoPayload) Publicize() *TodoPayload {
+	var pub TodoPayload
+	if ut.Description != nil {
+		pub.Description = *ut.Description
+	}
+	if ut.Title != nil {
+		pub.Title = *ut.Title
+	}
+	return &pub
+}
+
+// Todo payload
+type TodoPayload struct {
+	// Todo description
+	Description string `form:"description" json:"description" yaml:"description" xml:"description"`
+	// Todo title
+	Title string `form:"title" json:"title" yaml:"title" xml:"title"`
+}
+
+// Validate validates the TodoPayload type instance.
+func (ut *TodoPayload) Validate() (err error) {
+	if ut.Title == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "title"))
+	}
+	if ut.Description == "" {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`type`, "description"))
+	}
+	return
+}
+
+// Todo update payload
+type todoUpdatePayload struct {
+	// Todo description
+	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
+	// Todo status
+	Done *bool `form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty" xml:"done,omitempty"`
+	// Todo title
+	Title *string `form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
+}
+
+// Publicize creates TodoUpdatePayload from todoUpdatePayload
+func (ut *todoUpdatePayload) Publicize() *TodoUpdatePayload {
+	var pub TodoUpdatePayload
+	if ut.Description != nil {
+		pub.Description = ut.Description
+	}
+	if ut.Done != nil {
+		pub.Done = ut.Done
+	}
+	if ut.Title != nil {
+		pub.Title = ut.Title
+	}
+	return &pub
+}
+
+// Todo update payload
+type TodoUpdatePayload struct {
+	// Todo description
+	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
+	// Todo status
+	Done *bool `form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty" xml:"done,omitempty"`
+	// Todo title
+	Title *string `form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
 }

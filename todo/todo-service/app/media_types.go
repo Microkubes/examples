@@ -12,20 +12,18 @@ package app
 
 import (
 	"github.com/goadesign/goa"
-	"time"
 )
 
 // TodoMedia media type (default view)
 //
 // Identifier: application/json; view=default
 type TodoMedia struct {
-	CompletedAt *time.Time `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
-	CreatedAt   time.Time  `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
-	Description *string    `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
-	Done        bool       `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
-	ID          string     `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
-	Owner       *string    `bson:"owner,omitempty" form:"owner,omitempty" json:"owner,omitempty" yaml:"owner,omitempty"`
-	Title       *string    `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
+	CompletedAt *int    `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
+	CreatedAt   int     `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	Description *string `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
+	Done        bool    `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
+	ID          string  `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
+	Title       *string `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
 }
 
 // Validate validates the TodoMedia media type instance.
@@ -34,22 +32,5 @@ func (mt *TodoMedia) Validate() (err error) {
 		err = goa.MergeErrors(err, goa.MissingAttributeError(`response`, "id"))
 	}
 
-	return
-}
-
-// TodoMediaCollection is the media type for an array of TodoMedia (default view)
-//
-// Identifier: application/json; type=collection; view=default
-type TodoMediaCollection []*TodoMedia
-
-// Validate validates the TodoMediaCollection media type instance.
-func (mt TodoMediaCollection) Validate() (err error) {
-	for _, e := range mt {
-		if e != nil {
-			if err2 := e.Validate(); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-	}
 	return
 }

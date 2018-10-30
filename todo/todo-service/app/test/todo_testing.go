@@ -22,13 +22,336 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 )
 
-// AddTodoBadRequest runs the method Add of the given controller with the given parameters and payload.
+// AddTodoTodoBadRequest runs the method AddTodo of the given controller with the given parameters and payload.
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) (http.ResponseWriter, error) {
+func AddTodoTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.TodoPayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Validate payload
+	err := payload.Validate()
+	if err != nil {
+		e, ok := err.(goa.ServiceError)
+		if !ok {
+			panic(err) // bug
+		}
+		return nil, e
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/add"),
+	}
+	req, _err := http.NewRequest("POST", u.String(), nil)
+	if _err != nil {
+		panic("invalid test " + _err.Error()) // bug
+	}
+	prms := url.Values{}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	addTodoCtx, __err := app.NewAddTodoTodoContext(goaCtx, req, service)
+	if __err != nil {
+		_e, _ok := __err.(goa.ServiceError)
+		if !_ok {
+			panic("invalid test data " + __err.Error()) // bug
+		}
+		return nil, _e
+	}
+	addTodoCtx.Payload = payload
+
+	// Perform action
+	__err = ctrl.AddTodo(addTodoCtx)
+
+	// Validate response
+	if __err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	}
+	if rw.Code != 400 {
+		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var __ok bool
+		mt, __ok = resp.(error)
+		if !__ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// AddTodoTodoCreated runs the method AddTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func AddTodoTodoCreated(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.TodoPayload) (http.ResponseWriter, *app.TodoMedia) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Validate payload
+	err := payload.Validate()
+	if err != nil {
+		e, ok := err.(goa.ServiceError)
+		if !ok {
+			panic(err) // bug
+		}
+		t.Errorf("unexpected payload validation error: %+v", e)
+		return nil, nil
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/add"),
+	}
+	req, _err := http.NewRequest("POST", u.String(), nil)
+	if _err != nil {
+		panic("invalid test " + _err.Error()) // bug
+	}
+	prms := url.Values{}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	addTodoCtx, __err := app.NewAddTodoTodoContext(goaCtx, req, service)
+	if __err != nil {
+		_e, _ok := __err.(goa.ServiceError)
+		if !_ok {
+			panic("invalid test data " + __err.Error()) // bug
+		}
+		t.Errorf("unexpected parameter validation error: %+v", _e)
+		return nil, nil
+	}
+	addTodoCtx.Payload = payload
+
+	// Perform action
+	__err = ctrl.AddTodo(addTodoCtx)
+
+	// Validate response
+	if __err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	}
+	if rw.Code != 201 {
+		t.Errorf("invalid response status code: got %+v, expected 201", rw.Code)
+	}
+	var mt *app.TodoMedia
+	if resp != nil {
+		var __ok bool
+		mt, __ok = resp.(*app.TodoMedia)
+		if !__ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.TodoMedia", resp, resp)
+		}
+		__err = mt.Validate()
+		if __err != nil {
+			t.Errorf("invalid response media type: %s", __err)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// AddTodoTodoInternalServerError runs the method AddTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func AddTodoTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.TodoPayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Validate payload
+	err := payload.Validate()
+	if err != nil {
+		e, ok := err.(goa.ServiceError)
+		if !ok {
+			panic(err) // bug
+		}
+		return nil, e
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/add"),
+	}
+	req, _err := http.NewRequest("POST", u.String(), nil)
+	if _err != nil {
+		panic("invalid test " + _err.Error()) // bug
+	}
+	prms := url.Values{}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	addTodoCtx, __err := app.NewAddTodoTodoContext(goaCtx, req, service)
+	if __err != nil {
+		_e, _ok := __err.(goa.ServiceError)
+		if !_ok {
+			panic("invalid test data " + __err.Error()) // bug
+		}
+		return nil, _e
+	}
+	addTodoCtx.Payload = payload
+
+	// Perform action
+	__err = ctrl.AddTodo(addTodoCtx)
+
+	// Validate response
+	if __err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	}
+	if rw.Code != 500 {
+		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var __ok bool
+		mt, __ok = resp.(error)
+		if !__ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// AddTodoTodoNotFound runs the method AddTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func AddTodoTodoNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.TodoPayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Validate payload
+	err := payload.Validate()
+	if err != nil {
+		e, ok := err.(goa.ServiceError)
+		if !ok {
+			panic(err) // bug
+		}
+		return nil, e
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/add"),
+	}
+	req, _err := http.NewRequest("POST", u.String(), nil)
+	if _err != nil {
+		panic("invalid test " + _err.Error()) // bug
+	}
+	prms := url.Values{}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	addTodoCtx, __err := app.NewAddTodoTodoContext(goaCtx, req, service)
+	if __err != nil {
+		_e, _ok := __err.(goa.ServiceError)
+		if !_ok {
+			panic("invalid test data " + __err.Error()) // bug
+		}
+		return nil, _e
+	}
+	addTodoCtx.Payload = payload
+
+	// Perform action
+	__err = ctrl.AddTodo(addTodoCtx)
+
+	// Validate response
+	if __err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", __err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var __ok bool
+		mt, __ok = resp.(error)
+		if !__ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// DeleteTodoTodoBadRequest runs the method DeleteTodo of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func DeleteTodoTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -49,18 +372,19 @@ func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.S
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo"),
+		Path: fmt.Sprintf("/todo/%v/delete", todoID),
 	}
-	req, err := http.NewRequest("POST", u.String(), nil)
+	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	deleteTodoCtx, _err := app.NewDeleteTodoTodoContext(goaCtx, req, service)
 	if _err != nil {
 		e, ok := _err.(goa.ServiceError)
 		if !ok {
@@ -68,10 +392,9 @@ func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.S
 		}
 		return nil, e
 	}
-	addCtx.Payload = payload
 
 	// Perform action
-	_err = ctrl.Add(addCtx)
+	_err = ctrl.DeleteTodo(deleteTodoCtx)
 
 	// Validate response
 	if _err != nil {
@@ -93,11 +416,11 @@ func AddTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.S
 	return rw, mt
 }
 
-// AddTodoInternalServerError runs the method Add of the given controller with the given parameters and payload.
+// DeleteTodoTodoInternalServerError runs the method DeleteTodo of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) (http.ResponseWriter, error) {
+func DeleteTodoTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -118,18 +441,19 @@ func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, servi
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo"),
+		Path: fmt.Sprintf("/todo/%v/delete", todoID),
 	}
-	req, err := http.NewRequest("POST", u.String(), nil)
+	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	deleteTodoCtx, _err := app.NewDeleteTodoTodoContext(goaCtx, req, service)
 	if _err != nil {
 		e, ok := _err.(goa.ServiceError)
 		if !ok {
@@ -137,10 +461,9 @@ func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, servi
 		}
 		return nil, e
 	}
-	addCtx.Payload = payload
 
 	// Perform action
-	_err = ctrl.Add(addCtx)
+	_err = ctrl.DeleteTodo(deleteTodoCtx)
 
 	// Validate response
 	if _err != nil {
@@ -162,11 +485,80 @@ func AddTodoInternalServerError(t goatest.TInterface, ctx context.Context, servi
 	return rw, mt
 }
 
-// AddTodoOK runs the method Add of the given controller with the given parameters and payload.
+// DeleteTodoTodoNotFound runs the method DeleteTodo of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func DeleteTodoTodoNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v/delete", todoID),
+	}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	deleteTodoCtx, _err := app.NewDeleteTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.DeleteTodo(deleteTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// DeleteTodoTodoOK runs the method DeleteTodo of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, payload *app.Todo) http.ResponseWriter {
+func DeleteTodoTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) http.ResponseWriter {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -186,18 +578,19 @@ func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, 
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo"),
+		Path: fmt.Sprintf("/todo/%v/delete", todoID),
 	}
-	req, err := http.NewRequest("POST", u.String(), nil)
+	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	addCtx, _err := app.NewAddTodoContext(goaCtx, req, service)
+	deleteTodoCtx, _err := app.NewDeleteTodoTodoContext(goaCtx, req, service)
 	if _err != nil {
 		e, ok := _err.(goa.ServiceError)
 		if !ok {
@@ -206,10 +599,9 @@ func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, 
 		t.Errorf("unexpected parameter validation error: %+v", e)
 		return nil
 	}
-	addCtx.Payload = payload
 
 	// Perform action
-	_err = ctrl.Add(addCtx)
+	_err = ctrl.DeleteTodo(deleteTodoCtx)
 
 	// Validate response
 	if _err != nil {
@@ -223,11 +615,11 @@ func AddTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, 
 	return rw
 }
 
-// ListTodoInternalServerError runs the method List of the given controller with the given parameters.
+// GetAllTodosTodoBadRequest runs the method GetAllTodos of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController) (http.ResponseWriter, error) {
+func GetAllTodosTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, limit *int, offset *int, order *string, sorting *string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -247,19 +639,53 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 
 	// Setup request context
 	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		query["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		query["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		query["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		query["sorting"] = sliceVal
+	}
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo"),
+		Path:     fmt.Sprintf("/todo/all"),
+		RawQuery: query.Encode(),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		prms["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		prms["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		prms["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		prms["sorting"] = sliceVal
+	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	listCtx, _err := app.NewListTodoContext(goaCtx, req, service)
+	getAllTodosCtx, _err := app.NewGetAllTodosTodoContext(goaCtx, req, service)
 	if _err != nil {
 		e, ok := _err.(goa.ServiceError)
 		if !ok {
@@ -269,7 +695,109 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 	}
 
 	// Perform action
-	_err = ctrl.List(listCtx)
+	_err = ctrl.GetAllTodos(getAllTodosCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 400 {
+		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// GetAllTodosTodoInternalServerError runs the method GetAllTodos of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetAllTodosTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, limit *int, offset *int, order *string, sorting *string) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		query["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		query["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		query["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		query["sorting"] = sliceVal
+	}
+	u := &url.URL{
+		Path:     fmt.Sprintf("/todo/all"),
+		RawQuery: query.Encode(),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		prms["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		prms["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		prms["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		prms["sorting"] = sliceVal
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getAllTodosCtx, _err := app.NewGetAllTodosTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.GetAllTodos(getAllTodosCtx)
 
 	// Validate response
 	if _err != nil {
@@ -291,11 +819,207 @@ func ListTodoInternalServerError(t goatest.TInterface, ctx context.Context, serv
 	return rw, mt
 }
 
-// ListTodoOK runs the method List of the given controller with the given parameters.
+// GetAllTodosTodoNotFound runs the method GetAllTodos of the given controller with the given parameters.
 // It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
 // If ctx is nil then context.Background() is used.
 // If service is nil then a default service is created.
-func ListTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController) (http.ResponseWriter, app.TodoMediaCollection) {
+func GetAllTodosTodoNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, limit *int, offset *int, order *string, sorting *string) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		query["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		query["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		query["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		query["sorting"] = sliceVal
+	}
+	u := &url.URL{
+		Path:     fmt.Sprintf("/todo/all"),
+		RawQuery: query.Encode(),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		prms["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		prms["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		prms["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		prms["sorting"] = sliceVal
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getAllTodosCtx, _err := app.NewGetAllTodosTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.GetAllTodos(getAllTodosCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// GetAllTodosTodoOK runs the method GetAllTodos of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetAllTodosTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, limit *int, offset *int, order *string, sorting *string) http.ResponseWriter {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) {}
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	query := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		query["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		query["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		query["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		query["sorting"] = sliceVal
+	}
+	u := &url.URL{
+		Path:     fmt.Sprintf("/todo/all"),
+		RawQuery: query.Encode(),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	if limit != nil {
+		sliceVal := []string{strconv.Itoa(*limit)}
+		prms["limit"] = sliceVal
+	}
+	if offset != nil {
+		sliceVal := []string{strconv.Itoa(*offset)}
+		prms["offset"] = sliceVal
+	}
+	if order != nil {
+		sliceVal := []string{*order}
+		prms["order"] = sliceVal
+	}
+	if sorting != nil {
+		sliceVal := []string{*sorting}
+		prms["sorting"] = sliceVal
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getAllTodosCtx, _err := app.NewGetAllTodosTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		t.Errorf("unexpected parameter validation error: %+v", e)
+		return nil
+	}
+
+	// Perform action
+	_err = ctrl.GetAllTodos(getAllTodosCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 200 {
+		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
+	}
+
+	// Return results
+	return rw
+}
+
+// GetByIDTodoBadRequest runs the method GetByID of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetByIDTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
 	// Setup service
 	var (
 		logBuf bytes.Buffer
@@ -316,18 +1040,226 @@ func ListTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service,
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo"),
+		Path: fmt.Sprintf("/todo/%v", todoID),
 	}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		panic("invalid test " + err.Error()) // bug
 	}
 	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
-	listCtx, _err := app.NewListTodoContext(goaCtx, req, service)
+	getByIDCtx, _err := app.NewGetByIDTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.GetByID(getByIDCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 400 {
+		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// GetByIDTodoInternalServerError runs the method GetByID of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetByIDTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getByIDCtx, _err := app.NewGetByIDTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.GetByID(getByIDCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 500 {
+		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// GetByIDTodoNotFound runs the method GetByID of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetByIDTodoNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getByIDCtx, _err := app.NewGetByIDTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+
+	// Perform action
+	_err = ctrl.GetByID(getByIDCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// GetByIDTodoOK runs the method GetByID of the given controller with the given parameters.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func GetByIDTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string) (http.ResponseWriter, *app.TodoMedia) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	getByIDCtx, _err := app.NewGetByIDTodoContext(goaCtx, req, service)
 	if _err != nil {
 		e, ok := _err.(goa.ServiceError)
 		if !ok {
@@ -338,7 +1270,7 @@ func ListTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service,
 	}
 
 	// Perform action
-	_err = ctrl.List(listCtx)
+	_err = ctrl.GetByID(getByIDCtx)
 
 	// Validate response
 	if _err != nil {
@@ -347,12 +1279,582 @@ func ListTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service,
 	if rw.Code != 200 {
 		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
 	}
-	var mt app.TodoMediaCollection
+	var mt *app.TodoMedia
 	if resp != nil {
 		var _ok bool
-		mt, _ok = resp.(app.TodoMediaCollection)
+		mt, _ok = resp.(*app.TodoMedia)
 		if !_ok {
-			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.TodoMediaCollection", resp, resp)
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.TodoMedia", resp, resp)
+		}
+		_err = mt.Validate()
+		if _err != nil {
+			t.Errorf("invalid response media type: %s", _err)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoBadRequest runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoBadRequest(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 400 {
+		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoBadRequest1 runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoBadRequest1(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PATCH", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 400 {
+		t.Errorf("invalid response status code: got %+v, expected 400", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoInternalServerError runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoInternalServerError(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 500 {
+		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoInternalServerError1 runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoInternalServerError1(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PATCH", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 500 {
+		t.Errorf("invalid response status code: got %+v, expected 500", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoNotFound runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoNotFound(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoNotFound1 runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoNotFound1(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, error) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PATCH", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		return nil, e
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 404 {
+		t.Errorf("invalid response status code: got %+v, expected 404", rw.Code)
+	}
+	var mt error
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(error)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of error", resp, resp)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoOK runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoOK(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, *app.TodoMedia) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		t.Errorf("unexpected parameter validation error: %+v", e)
+		return nil, nil
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 200 {
+		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
+	}
+	var mt *app.TodoMedia
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(*app.TodoMedia)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.TodoMedia", resp, resp)
+		}
+		_err = mt.Validate()
+		if _err != nil {
+			t.Errorf("invalid response media type: %s", _err)
+		}
+	}
+
+	// Return results
+	return rw, mt
+}
+
+// UpdateTodoTodoOK1 runs the method UpdateTodo of the given controller with the given parameters and payload.
+// It returns the response writer so it's possible to inspect the response headers and the media type struct written to the response.
+// If ctx is nil then context.Background() is used.
+// If service is nil then a default service is created.
+func UpdateTodoTodoOK1(t goatest.TInterface, ctx context.Context, service *goa.Service, ctrl app.TodoController, todoID string, payload *app.TodoUpdatePayload) (http.ResponseWriter, *app.TodoMedia) {
+	// Setup service
+	var (
+		logBuf bytes.Buffer
+		resp   interface{}
+
+		respSetter goatest.ResponseSetterFunc = func(r interface{}) { resp = r }
+	)
+	if service == nil {
+		service = goatest.Service(&logBuf, respSetter)
+	} else {
+		logger := log.New(&logBuf, "", log.Ltime)
+		service.WithLogger(goa.NewLogger(logger))
+		newEncoder := func(io.Writer) goa.Encoder { return respSetter }
+		service.Encoder = goa.NewHTTPEncoder() // Make sure the code ends up using this decoder
+		service.Encoder.Register(newEncoder, "*/*")
+	}
+
+	// Setup request context
+	rw := httptest.NewRecorder()
+	u := &url.URL{
+		Path: fmt.Sprintf("/todo/%v", todoID),
+	}
+	req, err := http.NewRequest("PATCH", u.String(), nil)
+	if err != nil {
+		panic("invalid test " + err.Error()) // bug
+	}
+	prms := url.Values{}
+	prms["todoID"] = []string{fmt.Sprintf("%v", todoID)}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	goaCtx := goa.NewContext(goa.WithAction(ctx, "TodoTest"), rw, req, prms)
+	updateTodoCtx, _err := app.NewUpdateTodoTodoContext(goaCtx, req, service)
+	if _err != nil {
+		e, ok := _err.(goa.ServiceError)
+		if !ok {
+			panic("invalid test data " + _err.Error()) // bug
+		}
+		t.Errorf("unexpected parameter validation error: %+v", e)
+		return nil, nil
+	}
+	updateTodoCtx.Payload = payload
+
+	// Perform action
+	_err = ctrl.UpdateTodo(updateTodoCtx)
+
+	// Validate response
+	if _err != nil {
+		t.Fatalf("controller returned %+v, logs:\n%s", _err, logBuf.String())
+	}
+	if rw.Code != 200 {
+		t.Errorf("invalid response status code: got %+v, expected 200", rw.Code)
+	}
+	var mt *app.TodoMedia
+	if resp != nil {
+		var _ok bool
+		mt, _ok = resp.(*app.TodoMedia)
+		if !_ok {
+			t.Fatalf("invalid response media: got variable of type %T, value %+v, expected instance of app.TodoMedia", resp, resp)
 		}
 		_err = mt.Validate()
 		if _err != nil {
