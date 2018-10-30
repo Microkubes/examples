@@ -4,67 +4,24 @@ consumes:
 - application/gob
 - application/x-gob
 definitions:
-  Todo:
-    example:
-      completedAt: 1988-05-02T12:20:46Z
-      createdAt: 2008-04-25T11:36:34Z
-      description: Culpa sed.
-      done: false
-      id: Et reprehenderit officia aut.
-      owner: Dolorum deserunt ad placeat fugiat mollitia reiciendis.
-      title: Nostrum accusantium molestias blanditiis nam.
-    properties:
-      completedAt:
-        description: Timestamp (milliseconds) when this todo item was completed.
-        example: 1988-05-02T12:20:46Z
-        format: date-time
-        type: string
-      createdAt:
-        description: Timestamp (milliseconds) when this todo item was created.
-        example: 2008-04-25T11:36:34Z
-        format: date-time
-        type: string
-      description:
-        description: Todo item text.
-        example: Culpa sed.
-        type: string
-      done:
-        description: Is this todo item completed.
-        example: false
-        type: boolean
-      id:
-        description: The item's unique identifier.
-        example: Et reprehenderit officia aut.
-        type: string
-      owner:
-        description: Todo item owner's user ID
-        example: Dolorum deserunt ad placeat fugiat mollitia reiciendis.
-        type: string
-      title:
-        description: Todo item title.
-        example: Nostrum accusantium molestias blanditiis nam.
-        type: string
-    title: Todo
-    type: object
   TodoMedia:
     description: TodoMedia media type (default view)
     example:
-      completedAt: 1973-08-12T21:19:28Z
-      createdAt: 1971-03-28T22:27:26Z
+      completedAt: 1.7849052587171064e+18
+      createdAt: 5.1631909098674925e+17
       description: Id dolores ut iusto sit.
       done: true
       id: Sint ipsa.
-      owner: Et cumque eum ut suscipit.
-      title: Explicabo et.
+      title: Et cumque eum ut suscipit.
     properties:
       completedAt:
-        example: 1973-08-12T21:19:28Z
-        format: date-time
-        type: string
+        example: 1.7849052587171064e+18
+        format: int64
+        type: integer
       createdAt:
-        example: 1971-03-28T22:27:26Z
-        format: date-time
-        type: string
+        example: 5.1631909098674925e+17
+        format: int64
+        type: integer
       description:
         example: Id dolores ut iusto sit.
         type: string
@@ -74,11 +31,8 @@ definitions:
       id:
         example: Sint ipsa.
         type: string
-      owner:
-        example: Et cumque eum ut suscipit.
-        type: string
       title:
-        example: Explicabo et.
+        example: Et cumque eum ut suscipit.
         type: string
     required:
     - id
@@ -86,21 +40,46 @@ definitions:
     - done
     title: 'Mediatype identifier: application/json; view=default'
     type: object
-  TodoMediaCollection:
-    description: TodoMediaCollection is the media type for an array of TodoMedia (default
-      view)
+  TodoPayload:
+    description: Todo payload
     example:
-    - completedAt: 1973-08-12T21:19:28Z
-      createdAt: 1971-03-28T22:27:26Z
-      description: Id dolores ut iusto sit.
+      description: Explicabo et.
+      title: Enim placeat et culpa sed minus.
+    properties:
+      description:
+        description: Todo description
+        example: Explicabo et.
+        type: string
+      title:
+        description: Todo title
+        example: Enim placeat et culpa sed minus.
+        type: string
+    required:
+    - title
+    - description
+    title: TodoPayload
+    type: object
+  TodoUpdatePayload:
+    description: Todo update payload
+    example:
+      description: Et reprehenderit officia aut.
       done: true
-      id: Sint ipsa.
-      owner: Et cumque eum ut suscipit.
-      title: Explicabo et.
-    items:
-      $ref: '#/definitions/TodoMedia'
-    title: 'Mediatype identifier: application/json; type=collection; view=default'
-    type: array
+      title: Deserunt ad placeat.
+    properties:
+      description:
+        description: Todo description
+        example: Et reprehenderit officia aut.
+        type: string
+      done:
+        description: Todo status
+        example: true
+        type: boolean
+      title:
+        description: Todo title
+        example: Deserunt ad placeat.
+        type: string
+    title: TodoUpdatePayload
+    type: object
   error:
     description: Error response media type (default view)
     example:
@@ -108,7 +87,7 @@ definitions:
       detail: Value of ID must be an integer
       id: 3F1FKVRR
       meta:
-        timestamp: 1.458609e+09
+        timestamp: 1.458609066e+09
       status: "400"
     properties:
       code:
@@ -129,7 +108,7 @@ definitions:
         description: a meta object containing non-standard meta-information about
           the error.
         example:
-          timestamp: 1.458609e+09
+          timestamp: 1.458609066e+09
         type: object
       status:
         description: the HTTP status code applicable to this problem, expressed as
@@ -143,34 +122,131 @@ info:
   title: Micro Todo
   version: ""
 paths:
-  /todo:
+  /todo/{todoID}:
     get:
-      operationId: todo#list
+      description: Get todo by ID
+      operationId: todo#getById
+      parameters:
+      - description: Todo ID
+        in: path
+        name: todoID
+        required: true
+        type: string
       produces:
-      - application/json; type=collection
+      - application/json
       - application/vnd.goa.error
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/TodoMediaCollection'
+            $ref: '#/definitions/TodoMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/error'
       schemes:
       - http
-      summary: list todo
+      summary: getById todo
       tags:
       - todo
-    post:
-      operationId: todo#add
+    patch:
+      description: Update todo
+      operationId: todo#updateTodo#1
       parameters:
-      - in: body
+      - description: Todo ID
+        in: path
+        name: todoID
+        required: true
+        type: string
+      - description: Todo update payload
+        in: body
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/Todo'
+          $ref: '#/definitions/TodoUpdatePayload'
+      produces:
+      - application/json
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TodoMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: updateTodo todo
+      tags:
+      - todo
+    put:
+      description: Update todo
+      operationId: todo#updateTodo
+      parameters:
+      - description: Todo ID
+        in: path
+        name: todoID
+        required: true
+        type: string
+      - description: Todo update payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/TodoUpdatePayload'
+      produces:
+      - application/json
+      - application/vnd.goa.error
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/TodoMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: updateTodo todo
+      tags:
+      - todo
+  /todo/{todoID}/delete:
+    delete:
+      description: Delete todo
+      operationId: todo#deleteTodo
+      parameters:
+      - description: Todo ID
+        in: path
+        name: todoID
+        required: true
+        type: string
       produces:
       - application/vnd.goa.error
       - text/plain
@@ -181,13 +257,103 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/error'
       schemes:
       - http
-      summary: add todo
+      summary: deleteTodo todo
+      tags:
+      - todo
+  /todo/add:
+    post:
+      description: Add new todo
+      operationId: todo#addTodo
+      parameters:
+      - description: Todo payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/TodoPayload'
+      produces:
+      - application/json
+      - application/vnd.goa.error
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/TodoMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: addTodo todo
+      tags:
+      - todo
+  /todo/all:
+    get:
+      description: Get all todos
+      operationId: todo#getAllTodos
+      parameters:
+      - description: Limit todos per page
+        in: query
+        name: limit
+        required: false
+        type: integer
+      - description: number of todos to skip
+        in: query
+        name: offset
+        required: false
+        type: integer
+      - description: order by
+        in: query
+        name: order
+        required: false
+        type: string
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: sorting
+        required: false
+        type: string
+      produces:
+      - application/vnd.goa.error
+      - text/plain
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: getAllTodos todo
       tags:
       - todo
 produces:

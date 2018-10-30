@@ -1,12 +1,21 @@
 {
     "service":	{
-		"name": "todo-service",
+		"name": "microservice-todo",
 		"port": 8080,
 		"paths": ["/todo"],
-		"virtual_host": "todo-service.service.consul",
+		"virtual_host": "microservice-todo.service.consul",
 		"weight": 10,
 		"slots": 100
 	},
 	"gatewayUrl": "http://kong:8000",
-    "gatewayAdminUrl": "http://kong:8001"
+    "gatewayAdminUrl": "http://kong:8001",
+    "database":{
+        "dbName": "mongodb",
+        "dbInfo": {
+          "host": "mongo:27017",
+          "database": "todos",
+          "user": "restapi",
+          "pass": "restapi"
+        }
+      }
 }

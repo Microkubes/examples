@@ -12,24 +12,73 @@ var _ = API("microtodo", func() {
 })
 
 var _ = Resource("todo", func() {
+	BasePath("todo")
 	Origin("*", func() {
 		Methods("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS")
 	})
-	Action("list", func() {
-		Routing(GET("/todo"))
-		Response(OK, func() {
-			Media(CollectionOf(TodoMedia, func() {
-				View("default")
-			}))
-		})
+
+	Action("addTodo", func() {
+		Description("Add new todo")
+		Routing(POST("/add"))
+		Payload(TodoPayload)
+		Response(Created, TodoMedia)
+		Response(NotFound, ErrorMedia)
+		Response(BadRequest, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
 
-	Action("add", func() {
-		Routing(POST("/todo"))
-		Payload(Todo)
+	Action("getAllTodos", func() {
+		Description("Get all todos")
+		// order string, sorting string, limit int, offset int
+		Routing(GET("/all"))
+		Params(func() {
+			Param("order", String, "order by")
+			Param("sorting", String, func() {
+				Enum("asc", "desc")
+			})
+			Param("limit", Integer, "Limit todos per page")
+			Param("offset", Integer, "number of todos to skip")
+		})
 		Response(OK)
+		Response(NotFound, ErrorMedia)
 		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
+
+	Action("getById", func() {
+		Description("Get todo by ID")
+		Routing(GET("/:todoID"))
+		Params(func() {
+			Param("todoID", String, "Todo ID")
+		})
+		Response(OK, TodoMedia)
+		Response(NotFound, ErrorMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
+
+	Action("deleteTodo", func() {
+		Description("Delete todo")
+		Routing(DELETE("/:todoID/delete"))
+		Params(func() {
+			Param("todoID", String, "Todo ID")
+		})
+		Response(OK)
+		Response(NotFound, ErrorMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
+
+	Action("updateTodo", func() {
+		Description("Update todo")
+		Routing(PUT("/:todoID"), PATCH("/:todoID"))
+		Params(func() {
+			Param("todoID", String, "Todo ID")
+		})
+		Payload(TodoUpdatePayload)
+		Response(OK, TodoMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(NotFound, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
 })
@@ -42,7 +91,6 @@ var Todo = Type("Todo", func() {
 	Attribute("done", Boolean, "Is this todo item completed.")
 	Attribute("createdAt", DateTime, "Timestamp (milliseconds) when this todo item was created.")
 	Attribute("completedAt", DateTime, "Timestamp (milliseconds) when this todo item was completed.")
-	Attribute("owner", String, "Todo item owner's user ID")
 })
 
 // TodoMedia is todo item media type
@@ -75,23 +123,17 @@ var TodoMedia = MediaType("application/json", func() {
 			Metadata("struct:tag:yaml", "done", "omitempty")
 			Metadata("struct:tag:bson", "done", "omitempty")
 		})
-		Attribute("createdAt", DateTime, func() {
+		Attribute("createdAt", Integer, func() {
 			Metadata("struct:tag:json", "createdAt", "omitempty")
 			Metadata("struct:tag:form", "createdAt", "omitempty")
 			Metadata("struct:tag:yaml", "createdAt", "omitempty")
 			Metadata("struct:tag:bson", "createdAt", "omitempty")
 		})
-		Attribute("completedAt", DateTime, func() {
+		Attribute("completedAt", Integer, func() {
 			Metadata("struct:tag:json", "completedAt", "omitempty")
 			Metadata("struct:tag:form", "completedAt", "omitempty")
 			Metadata("struct:tag:yaml", "completedAt", "omitempty")
 			Metadata("struct:tag:bson", "completedAt", "omitempty")
-		})
-		Attribute("owner", String, func() {
-			Metadata("struct:tag:json", "owner", "omitempty")
-			Metadata("struct:tag:form", "owner", "omitempty")
-			Metadata("struct:tag:yaml", "owner", "omitempty")
-			Metadata("struct:tag:bson", "owner", "omitempty")
 		})
 
 		Required("id", "createdAt", "done")
@@ -104,6 +146,21 @@ var TodoMedia = MediaType("application/json", func() {
 		Attribute("done")
 		Attribute("createdAt")
 		Attribute("completedAt")
-		Attribute("owner")
 	})
+})
+
+// TodoPayload defines the payload for Todo objects.
+var TodoPayload = Type("TodoPayload", func() {
+	Description("Todo payload")
+	Attribute("title", String, "Todo title")
+	Attribute("description", String, "Todo description")
+	Required("title", "description")
+})
+
+// TodoUpdatePayload defines the payload for Todo objects.
+var TodoUpdatePayload = Type("TodoUpdatePayload", func() {
+	Description("Todo update payload")
+	Attribute("title", String, "Todo title")
+	Attribute("description", String, "Todo description")
+	Attribute("done", Boolean, "Todo status")
 })
