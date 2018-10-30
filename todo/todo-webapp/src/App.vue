@@ -1,5 +1,9 @@
 <template>
   <div id="app">
+    <router-link to="/">Home</router-link> |
+    <router-link to="/list">List</router-link> |
+    <router-link to="/login">Login</router-link>
+    <br/>
     <img src="./assets/logo.png">
     <router-view/>
   </div>
