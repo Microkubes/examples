@@ -81,6 +81,15 @@ var _ = Resource("todo", func() {
 		Response(NotFound, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
+
+	Action("filterTodos", func() {
+		Description("Filter (lookup) todos")
+		Routing(POST("/all"))
+		Payload(FilterTodoPayload)
+		Response(OK, PaginatedTodosMedia)
+		Response(BadRequest, ErrorMedia)
+		Response(InternalServerError, ErrorMedia)
+	})
 })
 
 // Todo item
@@ -163,4 +172,39 @@ var TodoUpdatePayload = Type("TodoUpdatePayload", func() {
 	Attribute("title", String, "Todo title")
 	Attribute("description", String, "Todo description")
 	Attribute("done", Boolean, "Todo status")
+})
+
+// FilterTodoPayload defines the filter object used in queries for filtering todos.
+// This defines the pagination attributes, the filter and the sort/order specification.
+var FilterTodoPayload = Type("FilterTodoPayload", func() {
+	Attribute("page", Integer, "Page number to fetch")
+	Attribute("pageSize", Integer, "Number of items per page")
+	Attribute("filter", Any, "Filter by fields key=>value")
+	Attribute("order", ArrayOf(OrderSpecs), "Sort specifications.")
+
+	Required("page", "pageSize")
+})
+
+// OrderSpecs specification for the ordering of sorted results.
+// Holds the property to sort by and the direction of sort - 'asc' ascending or 'desc' descending order.
+var OrderSpecs = Type("OrderSpecs", func() {
+	Attribute("property", String, "Order by property")
+	Attribute("direction", String, "Sort direction. One of 'asc' (ascending) or 'desc' (descenting).")
+})
+
+// PaginatedTodosMedia defines the paginated result of multiple todos.
+var PaginatedTodosMedia = MediaType("PaginatedTodosMedia", func() {
+	TypeName("PaginatedTodosMedia")
+	Attribute("page", Integer, "Current page number")
+	Attribute("pageSize", Integer, "Number of items per page")
+	Attribute("total", Integer, "Total number of items")
+	Attribute("items", ArrayOf(TodoMedia), "List of todos")
+
+	View("default", func() {
+		Attribute("page")
+		Attribute("pageSize")
+		Attribute("total")
+		Attribute("items")
+	})
+
 })

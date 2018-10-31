@@ -42,6 +42,13 @@ type (
 		PrettyPrint bool
 	}
 
+	// FilterTodosTodoCommand is the command line data structure for the filterTodos action of todo
+	FilterTodosTodoCommand struct {
+		Payload     string
+		ContentType string
+		PrettyPrint bool
+	}
+
 	// GetAllTodosTodoCommand is the command line data structure for the getAllTodos action of todo
 	GetAllTodosTodoCommand struct {
 		// Limit todos per page
@@ -87,8 +94,8 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 Payload example:
 
 {
-   "description": "Explicabo et.",
-   "title": "Enim placeat et culpa sed minus."
+   "description": "Placeat et culpa sed minus est.",
+   "title": "Reprehenderit officia aut explicabo dolorum."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
@@ -111,26 +118,49 @@ Payload example:
 	command.AddCommand(sub)
 	app.AddCommand(command)
 	command = &cobra.Command{
-		Use:   "get-all-todos",
-		Short: `Get all todos`,
+		Use:   "filter-todos",
+		Short: `Filter (lookup) todos`,
 	}
-	tmp3 := new(GetAllTodosTodoCommand)
+	tmp3 := new(FilterTodosTodoCommand)
 	sub = &cobra.Command{
 		Use:   `todo ["/todo/all"]`,
 		Short: ``,
-		RunE:  func(cmd *cobra.Command, args []string) error { return tmp3.Run(c, args) },
+		Long: `
+
+Payload example:
+
+{
+   "filter": "2a937f94-7ece-4c9d-bfc5-93b6fc588c72",
+   "order": [
+      {
+         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
+         "property": "Molestias blanditiis."
+      },
+      {
+         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
+         "property": "Molestias blanditiis."
+      },
+      {
+         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
+         "property": "Molestias blanditiis."
+      }
+   ],
+   "page": 6513134194393163019,
+   "pageSize": 3307553241945421545
+}`,
+		RunE: func(cmd *cobra.Command, args []string) error { return tmp3.Run(c, args) },
 	}
 	tmp3.RegisterFlags(sub, c)
 	sub.PersistentFlags().BoolVar(&tmp3.PrettyPrint, "pp", false, "Pretty print response body")
 	command.AddCommand(sub)
 	app.AddCommand(command)
 	command = &cobra.Command{
-		Use:   "get-byid",
-		Short: `Get todo by ID`,
+		Use:   "get-all-todos",
+		Short: `Get all todos`,
 	}
-	tmp4 := new(GetByIDTodoCommand)
+	tmp4 := new(GetAllTodosTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/todo/TODOID"]`,
+		Use:   `todo ["/todo/all"]`,
 		Short: ``,
 		RunE:  func(cmd *cobra.Command, args []string) error { return tmp4.Run(c, args) },
 	}
@@ -139,10 +169,24 @@ Payload example:
 	command.AddCommand(sub)
 	app.AddCommand(command)
 	command = &cobra.Command{
+		Use:   "get-byid",
+		Short: `Get todo by ID`,
+	}
+	tmp5 := new(GetByIDTodoCommand)
+	sub = &cobra.Command{
+		Use:   `todo ["/todo/TODOID"]`,
+		Short: ``,
+		RunE:  func(cmd *cobra.Command, args []string) error { return tmp5.Run(c, args) },
+	}
+	tmp5.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp5.PrettyPrint, "pp", false, "Pretty print response body")
+	command.AddCommand(sub)
+	app.AddCommand(command)
+	command = &cobra.Command{
 		Use:   "update-todo",
 		Short: `Update todo`,
 	}
-	tmp5 := new(UpdateTodoTodoCommand)
+	tmp6 := new(UpdateTodoTodoCommand)
 	sub = &cobra.Command{
 		Use:   `todo [("/todo/TODOID"|"/todo/TODOID")]`,
 		Short: ``,
@@ -151,14 +195,14 @@ Payload example:
 Payload example:
 
 {
-   "description": "Et reprehenderit officia aut.",
+   "description": "Odio eum dolores dolore.",
    "done": true,
-   "title": "Deserunt ad placeat."
+   "title": "Officiis eius quo."
 }`,
-		RunE: func(cmd *cobra.Command, args []string) error { return tmp5.Run(c, args) },
+		RunE: func(cmd *cobra.Command, args []string) error { return tmp6.Run(c, args) },
 	}
-	tmp5.RegisterFlags(sub, c)
-	sub.PersistentFlags().BoolVar(&tmp5.PrettyPrint, "pp", false, "Pretty print response body")
+	tmp6.RegisterFlags(sub, c)
+	sub.PersistentFlags().BoolVar(&tmp6.PrettyPrint, "pp", false, "Pretty print response body")
 	command.AddCommand(sub)
 	app.AddCommand(command)
 }
@@ -373,6 +417,39 @@ func (cmd *DeleteTodoTodoCommand) Run(c *client.Client, args []string) error {
 func (cmd *DeleteTodoTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
 	var todoID string
 	cc.Flags().StringVar(&cmd.TodoID, "todoID", todoID, `Todo ID`)
+}
+
+// Run makes the HTTP request corresponding to the FilterTodosTodoCommand command.
+func (cmd *FilterTodosTodoCommand) Run(c *client.Client, args []string) error {
+	var path string
+	if len(args) > 0 {
+		path = args[0]
+	} else {
+		path = "/todo/all"
+	}
+	var payload client.FilterTodoPayload
+	if cmd.Payload != "" {
+		err := json.Unmarshal([]byte(cmd.Payload), &payload)
+		if err != nil {
+			return fmt.Errorf("failed to deserialize payload: %s", err)
+		}
+	}
+	logger := goa.NewLogger(log.New(os.Stderr, "", log.LstdFlags))
+	ctx := goa.WithLogger(context.Background(), logger)
+	resp, err := c.FilterTodosTodo(ctx, path, &payload, cmd.ContentType)
+	if err != nil {
+		goa.LogError(ctx, "failed", "err", err)
+		return err
+	}
+
+	goaclient.HandleResponse(c.Client, resp, cmd.PrettyPrint)
+	return nil
+}
+
+// RegisterFlags registers the command flags with the command line.
+func (cmd *FilterTodosTodoCommand) RegisterFlags(cc *cobra.Command, c *client.Client) {
+	cc.Flags().StringVar(&cmd.Payload, "payload", "", "Request body encoded in JSON")
+	cc.Flags().StringVar(&cmd.ContentType, "content", "", "Request content type override, e.g. 'application/x-www-form-urlencoded'")
 }
 
 // Run makes the HTTP request corresponding to the GetAllTodosTodoCommand command.
