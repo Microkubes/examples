@@ -20,8 +20,9 @@ import (
 type TodoMedia struct {
 	CompletedAt *int    `bson:"completedAt,omitempty" form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty"`
 	CreatedAt   int     `bson:"createdAt,omitempty" form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	CreatedBy   *string `bson:"createdBy,omitempty" form:"createdBy,omitempty" json:"createdBy,omitempty" yaml:"createdBy,omitempty"`
 	Description *string `bson:"description,omitempty" form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty"`
-	Done        bool    `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
+	Done        *bool   `bson:"done,omitempty" form:"done,omitempty" json:"done,omitempty" yaml:"done,omitempty"`
 	ID          string  `bson:"_id,omitempty" form:"id,omitempty" json:"id,omitempty" yaml:"id,omitempty"`
 	Title       *string `bson:"title,omitempty" form:"title,omitempty" json:"title,omitempty" yaml:"title,omitempty"`
 }
@@ -39,7 +40,7 @@ func (mt *TodoMedia) Validate() (err error) {
 //
 // Identifier: paginatedtodosmedia; view=default
 type PaginatedTodosMedia struct {
-	// List of resources
+	// List of todos
 	Items []*TodoMedia `form:"items,omitempty" json:"items,omitempty" yaml:"items,omitempty" xml:"items,omitempty"`
 	// Current page number
 	Page *int `form:"page,omitempty" json:"page,omitempty" yaml:"page,omitempty" xml:"page,omitempty"`

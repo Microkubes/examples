@@ -15,6 +15,7 @@ type Todo struct {
 	Done        bool   `json:"done" bson:"done"`
 	CreatedAt   int    `json:"createdAt, omitempty" bson:"createdAt"`
 	CompletedAt int    `json:"completedAt, omitempty" bson:"completedAt"`
+	CreatedBy   string `json:"createdBy, omitempty" bson:"createdBy"`
 }
 
 // Todos represents a paginated results for multiple todos.

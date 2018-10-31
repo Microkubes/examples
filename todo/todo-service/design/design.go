@@ -100,6 +100,7 @@ var Todo = Type("Todo", func() {
 	Attribute("done", Boolean, "Is this todo item completed.")
 	Attribute("createdAt", DateTime, "Timestamp (milliseconds) when this todo item was created.")
 	Attribute("completedAt", DateTime, "Timestamp (milliseconds) when this todo item was completed.")
+	Attribute("createdBy", String, "User who created the todo.")
 })
 
 // TodoMedia is todo item media type
@@ -144,8 +145,14 @@ var TodoMedia = MediaType("application/json", func() {
 			Metadata("struct:tag:yaml", "completedAt", "omitempty")
 			Metadata("struct:tag:bson", "completedAt", "omitempty")
 		})
+		Attribute("createdBy", String, func() {
+			Metadata("struct:tag:json", "createdBy", "omitempty")
+			Metadata("struct:tag:form", "createdBy", "omitempty")
+			Metadata("struct:tag:yaml", "createdBy", "omitempty")
+			Metadata("struct:tag:bson", "createdBy", "omitempty")
+		})
 
-		Required("id", "createdAt", "done")
+		Required("id", "createdAt")
 	})
 
 	View("default", func() {
@@ -155,6 +162,7 @@ var TodoMedia = MediaType("application/json", func() {
 		Attribute("done")
 		Attribute("createdAt")
 		Attribute("completedAt")
+		Attribute("createdBy")
 	})
 })
 
