@@ -17,6 +17,31 @@ type Todo struct {
 	CompletedAt int    `json:"completedAt, omitempty" bson:"completedAt"`
 }
 
+// Todos represents a paginated results for multiple todos.
+type Todos struct {
+	Page     int                       `json:"page"`
+	PageSize int                       `json:"pageSize"`
+	Last     string                    `json:"last,omitempty"`
+	Total    int                       `json:"total"`
+	Items    []*map[string]interface{} `json:"items"`
+}
+
+// SortSpec represents a specification for a sort of todos list by a property
+// and with a sorting direction.
+type SortSpec struct {
+	Property string `json:"property"`
+	Order    string `json:"order"`
+}
+
+// Filter represents a request for looking up todos that match a certain criteria.
+type Filter struct {
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"pageSize"`
+	After    string                 `json:"after,omitempty"`
+	Filter   map[string]interface{} `json:"filter,omitempty"`
+	Sort     []SortSpec             `json:"sort,omitempty"`
+}
+
 //TodoCollection is collection of todos
 type TodoCollection []*app.TodoMedia
 
@@ -38,6 +63,9 @@ type TodoStore interface {
 
 	//DBUpdateTodo update existing todo
 	DBUpdateTodo(todo *Todo) (*Todo, error)
+
+	// Find performs a lookup for todos that match certain criteria.
+	DBFindTodos(filter *Filter) (*Todos, error)
 }
 
 //BackendTodosService holds data for implementation of the MetadataService interface.
@@ -86,7 +114,7 @@ func (r *BackendTodosService) DBGetAllTodos(order string, sorting string, limit 
 	return json.Marshal(todos)
 }
 
-//NewTodoService creates new MetadataService.
+//NewTodosService creates new MetadataService.
 func NewTodosService(todosRepository backends.Repository) TodoStore {
 	return &BackendTodosService{
 		todosRepository: todosRepository,
@@ -107,4 +135,60 @@ func (r *BackendTodosService) DBUpdateTodo(todo *Todo) (*Todo, error) {
 	}
 
 	return dbTodo, nil
+}
+
+// DBFindTodos performs a lookup for todos that match certain criteria.
+func (r *BackendTodosService) DBFindTodos(filter *Filter) (*Todos, error) {
+	if filter.Page <= 0 {
+		return nil, backends.ErrInvalidInput("invalid page number")
+	}
+	limit := filter.PageSize
+	if limit == 0 {
+		limit = 10
+	}
+	offset := (filter.Page - 1) * limit
+
+	selector := backends.NewFilter()
+	if filter.Filter != nil {
+		for prop, value := range filter.Filter {
+			selector.Set(prop, value)
+		}
+	}
+
+	order := ""
+	sort := ""
+	if filter.Sort != nil {
+		if len(filter.Sort) > 0 {
+			order = filter.Sort[0].Order
+			sort = filter.Sort[0].Property
+		}
+	}
+
+	var typeHint map[string]interface{}
+
+	result, err := r.todosRepository.GetAll(selector, typeHint, order, sort, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	totalTodos, err := r.todosRepository.GetAll(selector, typeHint, "", "", 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	total := totalTodos.(*[]*map[string]interface{})
+
+	todos := &Todos{
+		Page:     filter.Page,
+		PageSize: limit,
+		Total:    len(*total),
+	}
+
+	rcArrPtr, ok := result.(*[]*map[string]interface{})
+	if !ok {
+		return nil, backends.ErrBackendError("Expected results to be of type []*Todo")
+	}
+	rcArr := *rcArrPtr
+	todos.Items = rcArr
+
+	return todos, nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/JormungandrK/backends"
 	errors "github.com/JormungandrK/backends"
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/config"
@@ -237,4 +238,84 @@ func (c *TodosController) UpdateTodo(ctx *app.UpdateTodoTodoContext) error {
 	}
 
 	return ctx.OK(appTodo)
+}
+
+// FilterTodos runs the filterTodos action.
+func (c *TodosController) FilterTodos(ctx *app.FilterTodosTodoContext) error {
+	// TodosController_FilterTodos: start_implement
+
+	colFilter := map[string]interface{}{}
+
+	if ctx.Payload.Filter != nil {
+		var ok bool
+		colFilter, ok = ctx.Payload.Filter.(map[string]interface{})
+		if !ok {
+			// try if string, to match by ID
+			idval, ok := ctx.Payload.Filter.(string)
+			if !ok {
+				return ctx.BadRequest(goa.ErrBadRequest("invalid filter"))
+			}
+			colFilter = map[string]interface{}{"id": idval}
+		}
+	}
+
+	sortSpecs := []db.SortSpec{}
+	if ctx.Payload.Order != nil {
+		for _, spec := range ctx.Payload.Order {
+			sortSpecs = append(sortSpecs, db.SortSpec{
+				Order:    *spec.Direction,
+				Property: *spec.Property,
+			})
+		}
+	}
+
+	filter := db.Filter{
+		After:    "",
+		Page:     ctx.Payload.Page,
+		PageSize: ctx.Payload.PageSize,
+		Filter:   colFilter,
+		Sort:     sortSpecs,
+	}
+
+	todos, err := c.TodoStore.DBFindTodos(&filter)
+	if err != nil {
+		if backends.IsErrInvalidInput(err) {
+			return ctx.BadRequest(goa.ErrBadRequest(err))
+		}
+		return ctx.InternalServerError(goa.ErrInternal(err))
+	}
+
+	items := []*app.TodoMedia{}
+
+	if todos.Items != nil {
+		for _, rc := range todos.Items {
+			todo := &db.Todo{}
+
+			if err = backends.MapToInterface(rc, todo); err != nil {
+				return ctx.InternalServerError(goa.ErrInternal(err))
+			}
+			items = append(items, toTodo(todo, true))
+		}
+	}
+
+	res := &app.PaginatedTodosMedia{
+		Page:     &todos.Page,
+		PageSize: &todos.PageSize,
+		Total:    &todos.Total,
+		Items:    items,
+	}
+	return ctx.OK(res)
+	// TodosController_FilterTodos: end_implement
+}
+
+func toTodo(td *db.Todo, maskCreds bool) *app.TodoMedia {
+	createdAt := int(td.CreatedAt)
+	return &app.TodoMedia{
+		CreatedAt:   createdAt,
+		ID:          td.ID,
+		CompletedAt: &td.CompletedAt,
+		Done:        td.Done,
+		Description: &td.Description,
+		Title:       &td.Title,
+	}
 }

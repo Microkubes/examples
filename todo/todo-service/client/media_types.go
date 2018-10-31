@@ -49,3 +49,36 @@ func (c *Client) DecodeErrorResponse(resp *http.Response) (*goa.ErrorResponse, e
 	err := c.Decoder.Decode(&decoded, resp.Body, resp.Header.Get("Content-Type"))
 	return &decoded, err
 }
+
+// PaginatedTodosMedia media type (default view)
+//
+// Identifier: paginatedtodosmedia; view=default
+type PaginatedTodosMedia struct {
+	// List of resources
+	Items []*TodoMedia `form:"items,omitempty" json:"items,omitempty" yaml:"items,omitempty" xml:"items,omitempty"`
+	// Current page number
+	Page *int `form:"page,omitempty" json:"page,omitempty" yaml:"page,omitempty" xml:"page,omitempty"`
+	// Number of items per page
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty" yaml:"pageSize,omitempty" xml:"pageSize,omitempty"`
+	// Total number of items
+	Total *int `form:"total,omitempty" json:"total,omitempty" yaml:"total,omitempty" xml:"total,omitempty"`
+}
+
+// Validate validates the PaginatedTodosMedia media type instance.
+func (mt *PaginatedTodosMedia) Validate() (err error) {
+	for _, e := range mt.Items {
+		if e != nil {
+			if err2 := e.Validate(); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// DecodePaginatedTodosMedia decodes the PaginatedTodosMedia instance encoded in resp body.
+func (c *Client) DecodePaginatedTodosMedia(resp *http.Response) (*PaginatedTodosMedia, error) {
+	var decoded PaginatedTodosMedia
+	err := c.Decoder.Decode(&decoded, resp.Body, resp.Header.Get("Content-Type"))
+	return &decoded, err
+}
