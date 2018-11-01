@@ -152,7 +152,7 @@ func (r *BackendTodosService) DBFindTodos(filter *Filter) (*Todos, error) {
 	selector := backends.NewFilter()
 	if filter.Filter != nil {
 		for prop, value := range filter.Filter {
-			selector.Set(prop, value)
+			selector.MatchPattern(prop, value.(string))
 		}
 	}
 
@@ -167,7 +167,7 @@ func (r *BackendTodosService) DBFindTodos(filter *Filter) (*Todos, error) {
 
 	var typeHint map[string]interface{}
 
-	result, err := r.todosRepository.GetAll(selector, typeHint, order, sort, limit, offset)
+	result, err := r.todosRepository.GetAll(selector, typeHint, sort, order, limit, offset)
 	if err != nil {
 		return nil, err
 	}
