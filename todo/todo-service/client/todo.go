@@ -95,7 +95,7 @@ func (c *Client) NewDeleteTodoTodoRequest(ctx context.Context, path string) (*ht
 // FilterTodosTodoPath computes a request path to the filterTodos action of todo.
 func FilterTodosTodoPath() string {
 
-	return fmt.Sprintf("/todo/all")
+	return fmt.Sprintf("/todo/filter")
 }
 
 // Filter (lookup) todos
