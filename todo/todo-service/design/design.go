@@ -84,7 +84,7 @@ var _ = Resource("todo", func() {
 
 	Action("filterTodos", func() {
 		Description("Filter (lookup) todos")
-		Routing(POST("/all"))
+		Routing(POST("/filter"))
 		Payload(FilterTodoPayload)
 		Response(OK, PaginatedTodosMedia)
 		Response(BadRequest, ErrorMedia)
