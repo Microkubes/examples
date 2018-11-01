@@ -49,6 +49,7 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 	var h goa.Handler
 	service.Mux.Handle("OPTIONS", "/todo/add", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/:todoID/delete", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/todo/filter", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/all", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/:todoID", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 
@@ -109,8 +110,8 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 		return ctrl.FilterTodos(rctx)
 	}
 	h = handleTodoOrigin(h)
-	service.Mux.Handle("POST", "/todo/all", ctrl.MuxHandler("filterTodos", h, unmarshalFilterTodosTodoPayload))
-	service.LogInfo("mount", "ctrl", "Todo", "action", "FilterTodos", "route", "POST /todo/all")
+	service.Mux.Handle("POST", "/todo/filter", ctrl.MuxHandler("filterTodos", h, unmarshalFilterTodosTodoPayload))
+	service.LogInfo("mount", "ctrl", "Todo", "action", "FilterTodos", "route", "POST /todo/filter")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request

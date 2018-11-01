@@ -123,7 +123,7 @@ Payload example:
 	}
 	tmp3 := new(FilterTodosTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/todo/all"]`,
+		Use:   `todo ["/todo/filter"]`,
 		Short: ``,
 		Long: `
 
@@ -421,7 +421,7 @@ func (cmd *FilterTodosTodoCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/todo/all"
+		path = "/todo/filter"
 	}
 	var payload client.FilterTodoPayload
 	if cmd.Payload != "" {

@@ -650,7 +650,7 @@ func FilterTodosTodoBadRequest(t goatest.TInterface, ctx context.Context, servic
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo/all"),
+		Path: fmt.Sprintf("/todo/filter"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -729,7 +729,7 @@ func FilterTodosTodoInternalServerError(t goatest.TInterface, ctx context.Contex
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo/all"),
+		Path: fmt.Sprintf("/todo/filter"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {
@@ -809,7 +809,7 @@ func FilterTodosTodoOK(t goatest.TInterface, ctx context.Context, service *goa.S
 	// Setup request context
 	rw := httptest.NewRecorder()
 	u := &url.URL{
-		Path: fmt.Sprintf("/todo/all"),
+		Path: fmt.Sprintf("/todo/filter"),
 	}
 	req, _err := http.NewRequest("POST", u.String(), nil)
 	if _err != nil {

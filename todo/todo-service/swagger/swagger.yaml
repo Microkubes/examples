@@ -472,6 +472,7 @@ paths:
       summary: getAllTodos todo
       tags:
       - todo
+  /todo/filter:
     post:
       description: Filter (lookup) todos
       operationId: todo#filterTodos
