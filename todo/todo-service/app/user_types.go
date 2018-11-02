@@ -111,6 +111,8 @@ type todo struct {
 	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
 	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// User who created the todo.
+	CreatedBy *string `form:"createdBy,omitempty" json:"createdBy,omitempty" yaml:"createdBy,omitempty" xml:"createdBy,omitempty"`
 	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.
@@ -129,6 +131,9 @@ func (ut *todo) Publicize() *Todo {
 	}
 	if ut.CreatedAt != nil {
 		pub.CreatedAt = ut.CreatedAt
+	}
+	if ut.CreatedBy != nil {
+		pub.CreatedBy = ut.CreatedBy
 	}
 	if ut.Description != nil {
 		pub.Description = ut.Description
@@ -151,6 +156,8 @@ type Todo struct {
 	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
 	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// User who created the todo.
+	CreatedBy *string `form:"createdBy,omitempty" json:"createdBy,omitempty" yaml:"createdBy,omitempty" xml:"createdBy,omitempty"`
 	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.

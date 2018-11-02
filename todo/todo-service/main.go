@@ -11,6 +11,8 @@ import (
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/config"
 	"github.com/Microkubes/examples/todo/todo-service/db"
+	"github.com/Microkubes/microservice-security/chain"
+	"github.com/Microkubes/microservice-security/flow"
 	toolscfg "github.com/Microkubes/microservice-tools/config"
 	"github.com/Microkubes/microservice-tools/gateway"
 	"github.com/goadesign/goa"
@@ -30,27 +32,22 @@ func main() {
 
 	unregisterService := registerMicroservice(cfg.ToStandardConfig(), gatewayAdminURL)
 	defer unregisterService()
-	// securityChain, _, err := flow.NewSecurityFromConfig(&config.ServiceConfig{
-	// 	SecurityConfig: config.SecurityConfig{
-	// 		KeysDir: Getenv("TODO_KEYS_DIR", "keys"),
-	// 		JWTConfig: &config.JWTConfig{
-	// 			Name:        "todo-jwt",
-	// 			Description: "TODO JWT Security",
-	// 			TokenURL:    Getenv("TODO_JWT_TOKEN_ISSUER_URL", "http://kong:8000/jwt/signin"),
-	// 		},
-	// 	},
-	// })
 
-	// if err != nil {
-	// 	log.Fatal("Failed to set up the service security. ", err)
-	// }
+	securityChain, securityCleanup, err := flow.NewSecurityFromConfig(cfg.ToStandardConfig())
+	if err != nil {
+		log.Fatal("Failed to create security chain: ", err)
+	}
+	defer securityCleanup()
+
 	// Mount middleware
 	service.Use(middleware.RequestID())
 	service.Use(middleware.LogRequest(true))
 	service.Use(middleware.ErrorHandler(service, true))
 	service.Use(middleware.Recover())
 
-	// attach the security chain as Goa middleware
+	// Mount security chain as Goa Middleware
+	service.Use(chain.AsGoaMiddleware(securityChain))
+
 	// service.Use(chain.AsGoaMiddleware(securityChain))
 	todosService, err := setupTodosService(cfg.ToStandardConfig())
 	if err != nil {

@@ -94,8 +94,8 @@ func RegisterCommands(app *cobra.Command, c *client.Client) {
 Payload example:
 
 {
-   "description": "Placeat et culpa sed minus est.",
-   "title": "Reprehenderit officia aut explicabo dolorum."
+   "description": "Sed minus.",
+   "title": "Et reprehenderit officia aut."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp1.Run(c, args) },
 	}
@@ -123,30 +123,26 @@ Payload example:
 	}
 	tmp3 := new(FilterTodosTodoCommand)
 	sub = &cobra.Command{
-		Use:   `todo ["/todo/all"]`,
+		Use:   `todo ["/todo/filter"]`,
 		Short: ``,
 		Long: `
 
 Payload example:
 
 {
-   "filter": "2a937f94-7ece-4c9d-bfc5-93b6fc588c72",
+   "filter": "1971-12-03T04:24:10Z",
    "order": [
       {
-         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
-         "property": "Molestias blanditiis."
+         "direction": "Placeat fugiat mollitia reiciendis.",
+         "property": "Nostrum accusantium molestias blanditiis nam."
       },
       {
-         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
-         "property": "Molestias blanditiis."
-      },
-      {
-         "direction": "Fugiat mollitia reiciendis cumque nostrum.",
-         "property": "Molestias blanditiis."
+         "direction": "Placeat fugiat mollitia reiciendis.",
+         "property": "Nostrum accusantium molestias blanditiis nam."
       }
    ],
-   "page": 6513134194393163019,
-   "pageSize": 3307553241945421545
+   "page": 3307553241945421545,
+   "pageSize": 2433291310988242551
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp3.Run(c, args) },
 	}
@@ -195,9 +191,9 @@ Payload example:
 Payload example:
 
 {
-   "description": "Odio eum dolores dolore.",
-   "done": true,
-   "title": "Officiis eius quo."
+   "description": "Eum dolores dolore similique soluta officiis.",
+   "done": false,
+   "title": "Fuga soluta."
 }`,
 		RunE: func(cmd *cobra.Command, args []string) error { return tmp6.Run(c, args) },
 	}
@@ -425,7 +421,7 @@ func (cmd *FilterTodosTodoCommand) Run(c *client.Client, args []string) error {
 	if len(args) > 0 {
 		path = args[0]
 	} else {
-		path = "/todo/all"
+		path = "/todo/filter"
 	}
 	var payload client.FilterTodoPayload
 	if cmd.Payload != "" {

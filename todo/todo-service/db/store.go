@@ -15,6 +15,7 @@ type Todo struct {
 	Done        bool   `json:"done" bson:"done"`
 	CreatedAt   int    `json:"createdAt, omitempty" bson:"createdAt"`
 	CompletedAt int    `json:"completedAt, omitempty" bson:"completedAt"`
+	CreatedBy   string `json:"createdBy, omitempty" bson:"createdBy"`
 }
 
 // Todos represents a paginated results for multiple todos.
@@ -151,7 +152,7 @@ func (r *BackendTodosService) DBFindTodos(filter *Filter) (*Todos, error) {
 	selector := backends.NewFilter()
 	if filter.Filter != nil {
 		for prop, value := range filter.Filter {
-			selector.Set(prop, value)
+			selector.MatchPattern(prop, value.(string))
 		}
 	}
 
@@ -166,7 +167,7 @@ func (r *BackendTodosService) DBFindTodos(filter *Filter) (*Todos, error) {
 
 	var typeHint map[string]interface{}
 
-	result, err := r.todosRepository.GetAll(selector, typeHint, order, sort, limit, offset)
+	result, err := r.todosRepository.GetAll(selector, typeHint, sort, order, limit, offset)
 	if err != nil {
 		return nil, err
 	}
