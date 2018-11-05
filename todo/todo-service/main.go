@@ -23,16 +23,22 @@ func main() {
 	// Create service
 	service := goa.New("todo-service")
 
+	// Load the Gateway URL and the config file path
 	gatewayAdminURL, configFile := loadGatewaySettings()
 
+	// Load config from file
 	cfg, err := loadConfig(configFile)
 	if err != nil {
 		log.Fatal("Failed to load config: ", err)
 	}
 
 	unregisterService := registerMicroservice(cfg.ToStandardConfig(), gatewayAdminURL)
+
+	// The unregistration is deferred for after main() executes. If we shut down
+	// the service, it is nice to unregister, although it is not required.
 	defer unregisterService()
 
+	// Create security chain for the microservice
 	securityChain, securityCleanup, err := flow.NewSecurityFromConfig(cfg.ToStandardConfig())
 	if err != nil {
 		log.Fatal("Failed to create security chain: ", err)
@@ -48,7 +54,7 @@ func main() {
 	// Mount security chain as Goa Middleware
 	service.Use(chain.AsGoaMiddleware(securityChain))
 
-	// service.Use(chain.AsGoaMiddleware(securityChain))
+	// Instantiate TodosService
 	todosService, err := setupTodosService(cfg.ToStandardConfig())
 	if err != nil {
 		log.Fatal("Failed to create a service: ", err)
@@ -65,11 +71,15 @@ func main() {
 
 }
 
+// Register the microservice on Kong Gateway
 func registerMicroservice(cfg *toolscfg.ServiceConfig, gatewayAdminURL string) func() {
+	// Creates new Kong gateway.Registration with the config settings. We pass the default http client here.
 	registration := gateway.NewKongGateway(gatewayAdminURL, &http.Client{}, cfg.Service)
 
+	// At this point we do a self-registration by calling SelfRegister
 	err := registration.SelfRegister()
 	if err != nil {
+		// if there is an error it means we failed to self-register so we panic with error
 		panic(err)
 	}
 
@@ -87,6 +97,7 @@ func Getenv(variable, defaultValue string) string {
 	return value
 }
 
+// loadConfig loads a configuration from a file.
 func loadConfig(file string) (*config.ServiceConfig, error) {
 	cfg := &config.ServiceConfig{}
 	err := toolscfg.LoadConfigAs(file, cfg)
@@ -94,14 +105,21 @@ func loadConfig(file string) (*config.ServiceConfig, error) {
 	return cfg, err
 }
 
+// setupBackend creates a backend and returns it.
 func setupBackend(dbConfig toolscfg.DBConfig) (backends.Backend, backends.BackendManager, error) {
 	dbinfoMap := map[string]*toolscfg.DBInfo{}
 	dbinfoMap[dbConfig.DBName] = &dbConfig.DBInfo
+
+	// Define the supported backend (MongoDB/DynamoDB)
 	backendManager := backends.NewBackendSupport(dbinfoMap)
+
+	// Get the desired backend
 	backend, err := backendManager.GetBackend(dbConfig.DBName)
+
 	return backend, backendManager, err
 }
 
+// setupRepository defines the repository (collection/table) used in this microservice
 func setupRepository(backend backends.Backend) (backends.Repository, error) {
 	return backend.DefineRepository("todos", backends.RepositoryDefinitionMap{
 		"name": "todos",
@@ -120,6 +138,7 @@ func setupRepository(backend backends.Backend) (backends.Repository, error) {
 	})
 }
 
+// setupTodosService sets up new todos service.
 func setupTodosService(serviceConfig *toolscfg.ServiceConfig) (db.TodoStore, error) {
 	backend, _, err := setupBackend(serviceConfig.DBConfig)
 	if err != nil {
@@ -133,6 +152,7 @@ func setupTodosService(serviceConfig *toolscfg.ServiceConfig) (db.TodoStore, err
 	return db.NewTodosService(todosRepo), nil
 }
 
+// loadGatewaySettings loads the API Gateway URL and the path to the JSON config file from ENV variables.
 func loadGatewaySettings() (string, string) {
 	gatewayURL := os.Getenv("API_GATEWAY_URL")
 	serviceConfigFile := os.Getenv("SERVICE_CONFIG_FILE")
