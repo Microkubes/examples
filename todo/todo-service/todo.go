@@ -315,6 +315,7 @@ func (c *TodosController) FilterTodos(ctx *app.FilterTodosTodoContext) error {
 	// TodosController_FilterTodos: end_implement
 }
 
+// toTodo converts a Todo to TodoMedia
 func toTodo(td *db.Todo, maskCreds bool) *app.TodoMedia {
 	createdAt := int(td.CreatedAt)
 	return &app.TodoMedia{
