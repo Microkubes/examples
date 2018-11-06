@@ -15,12 +15,104 @@ import (
 	"time"
 )
 
+// filterTodoPayload user type.
+type filterTodoPayload struct {
+	// Filter by fields key=>value
+	Filter interface{} `form:"filter,omitempty" json:"filter,omitempty" yaml:"filter,omitempty" xml:"filter,omitempty"`
+	// Sort specifications.
+	Order []*orderSpecs `form:"order,omitempty" json:"order,omitempty" yaml:"order,omitempty" xml:"order,omitempty"`
+	// Page number to fetch
+	Page *int `form:"page,omitempty" json:"page,omitempty" yaml:"page,omitempty" xml:"page,omitempty"`
+	// Number of items per page
+	PageSize *int `form:"pageSize,omitempty" json:"pageSize,omitempty" yaml:"pageSize,omitempty" xml:"pageSize,omitempty"`
+}
+
+// Validate validates the filterTodoPayload type instance.
+func (ut *filterTodoPayload) Validate() (err error) {
+	if ut.Page == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "page"))
+	}
+	if ut.PageSize == nil {
+		err = goa.MergeErrors(err, goa.MissingAttributeError(`request`, "pageSize"))
+	}
+	return
+}
+
+// Publicize creates FilterTodoPayload from filterTodoPayload
+func (ut *filterTodoPayload) Publicize() *FilterTodoPayload {
+	var pub FilterTodoPayload
+	if ut.Filter != nil {
+		pub.Filter = ut.Filter
+	}
+	if ut.Order != nil {
+		pub.Order = make([]*OrderSpecs, len(ut.Order))
+		for i2, elem2 := range ut.Order {
+			pub.Order[i2] = elem2.Publicize()
+		}
+	}
+	if ut.Page != nil {
+		pub.Page = *ut.Page
+	}
+	if ut.PageSize != nil {
+		pub.PageSize = *ut.PageSize
+	}
+	return &pub
+}
+
+// FilterTodoPayload user type.
+type FilterTodoPayload struct {
+	// Filter by fields key=>value
+	Filter interface{} `form:"filter,omitempty" json:"filter,omitempty" yaml:"filter,omitempty" xml:"filter,omitempty"`
+	// Sort specifications.
+	Order []*OrderSpecs `form:"order,omitempty" json:"order,omitempty" yaml:"order,omitempty" xml:"order,omitempty"`
+	// Page number to fetch
+	Page int `form:"page" json:"page" yaml:"page" xml:"page"`
+	// Number of items per page
+	PageSize int `form:"pageSize" json:"pageSize" yaml:"pageSize" xml:"pageSize"`
+}
+
+// Validate validates the FilterTodoPayload type instance.
+func (ut *FilterTodoPayload) Validate() (err error) {
+
+	return
+}
+
+// orderSpecs user type.
+type orderSpecs struct {
+	// Sort direction. One of 'asc' (ascending) or 'desc' (descenting).
+	Direction *string `form:"direction,omitempty" json:"direction,omitempty" yaml:"direction,omitempty" xml:"direction,omitempty"`
+	// Order by property
+	Property *string `form:"property,omitempty" json:"property,omitempty" yaml:"property,omitempty" xml:"property,omitempty"`
+}
+
+// Publicize creates OrderSpecs from orderSpecs
+func (ut *orderSpecs) Publicize() *OrderSpecs {
+	var pub OrderSpecs
+	if ut.Direction != nil {
+		pub.Direction = ut.Direction
+	}
+	if ut.Property != nil {
+		pub.Property = ut.Property
+	}
+	return &pub
+}
+
+// OrderSpecs user type.
+type OrderSpecs struct {
+	// Sort direction. One of 'asc' (ascending) or 'desc' (descenting).
+	Direction *string `form:"direction,omitempty" json:"direction,omitempty" yaml:"direction,omitempty" xml:"direction,omitempty"`
+	// Order by property
+	Property *string `form:"property,omitempty" json:"property,omitempty" yaml:"property,omitempty" xml:"property,omitempty"`
+}
+
 // todo user type.
 type todo struct {
 	// Timestamp (milliseconds) when this todo item was completed.
 	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
 	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// User who created the todo.
+	CreatedBy *string `form:"createdBy,omitempty" json:"createdBy,omitempty" yaml:"createdBy,omitempty" xml:"createdBy,omitempty"`
 	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.
@@ -39,6 +131,9 @@ func (ut *todo) Publicize() *Todo {
 	}
 	if ut.CreatedAt != nil {
 		pub.CreatedAt = ut.CreatedAt
+	}
+	if ut.CreatedBy != nil {
+		pub.CreatedBy = ut.CreatedBy
 	}
 	if ut.Description != nil {
 		pub.Description = ut.Description
@@ -61,6 +156,8 @@ type Todo struct {
 	CompletedAt *time.Time `form:"completedAt,omitempty" json:"completedAt,omitempty" yaml:"completedAt,omitempty" xml:"completedAt,omitempty"`
 	// Timestamp (milliseconds) when this todo item was created.
 	CreatedAt *time.Time `form:"createdAt,omitempty" json:"createdAt,omitempty" yaml:"createdAt,omitempty" xml:"createdAt,omitempty"`
+	// User who created the todo.
+	CreatedBy *string `form:"createdBy,omitempty" json:"createdBy,omitempty" yaml:"createdBy,omitempty" xml:"createdBy,omitempty"`
 	// Todo item text.
 	Description *string `form:"description,omitempty" json:"description,omitempty" yaml:"description,omitempty" xml:"description,omitempty"`
 	// Is this todo item completed.

@@ -37,6 +37,7 @@ type TodoController interface {
 	goa.Muxer
 	AddTodo(*AddTodoTodoContext) error
 	DeleteTodo(*DeleteTodoTodoContext) error
+	FilterTodos(*FilterTodosTodoContext) error
 	GetAllTodos(*GetAllTodosTodoContext) error
 	GetByID(*GetByIDTodoContext) error
 	UpdateTodo(*UpdateTodoTodoContext) error
@@ -48,6 +49,7 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 	var h goa.Handler
 	service.Mux.Handle("OPTIONS", "/todo/add", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/:todoID/delete", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
+	service.Mux.Handle("OPTIONS", "/todo/filter", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/all", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 	service.Mux.Handle("OPTIONS", "/todo/:todoID", ctrl.MuxHandler("preflight", handleTodoOrigin(cors.HandlePreflight()), nil))
 
@@ -88,6 +90,28 @@ func MountTodoController(service *goa.Service, ctrl TodoController) {
 	h = handleTodoOrigin(h)
 	service.Mux.Handle("DELETE", "/todo/:todoID/delete", ctrl.MuxHandler("deleteTodo", h, nil))
 	service.LogInfo("mount", "ctrl", "Todo", "action", "DeleteTodo", "route", "DELETE /todo/:todoID/delete")
+
+	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
+		// Check if there was an error loading the request
+		if err := goa.ContextError(ctx); err != nil {
+			return err
+		}
+		// Build the context
+		rctx, err := NewFilterTodosTodoContext(ctx, req, service)
+		if err != nil {
+			return err
+		}
+		// Build the payload
+		if rawPayload := goa.ContextRequest(ctx).Payload; rawPayload != nil {
+			rctx.Payload = rawPayload.(*FilterTodoPayload)
+		} else {
+			return goa.MissingPayloadError()
+		}
+		return ctrl.FilterTodos(rctx)
+	}
+	h = handleTodoOrigin(h)
+	service.Mux.Handle("POST", "/todo/filter", ctrl.MuxHandler("filterTodos", h, unmarshalFilterTodosTodoPayload))
+	service.LogInfo("mount", "ctrl", "Todo", "action", "FilterTodos", "route", "POST /todo/filter")
 
 	h = func(ctx context.Context, rw http.ResponseWriter, req *http.Request) error {
 		// Check if there was an error loading the request
@@ -173,6 +197,21 @@ func handleTodoOrigin(h goa.Handler) goa.Handler {
 // unmarshalAddTodoTodoPayload unmarshals the request body into the context request data Payload field.
 func unmarshalAddTodoTodoPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
 	payload := &todoPayload{}
+	if err := service.DecodeRequest(req, payload); err != nil {
+		return err
+	}
+	if err := payload.Validate(); err != nil {
+		// Initialize payload with private data structure so it can be logged
+		goa.ContextRequest(ctx).Payload = payload
+		return err
+	}
+	goa.ContextRequest(ctx).Payload = payload.Publicize()
+	return nil
+}
+
+// unmarshalFilterTodosTodoPayload unmarshals the request body into the context request data Payload field.
+func unmarshalFilterTodosTodoPayload(ctx context.Context, service *goa.Service, req *http.Request) error {
+	payload := &filterTodoPayload{}
 	if err := service.DecodeRequest(req, payload); err != nil {
 		return err
 	}

@@ -92,6 +92,49 @@ func (c *Client) NewDeleteTodoTodoRequest(ctx context.Context, path string) (*ht
 	return req, nil
 }
 
+// FilterTodosTodoPath computes a request path to the filterTodos action of todo.
+func FilterTodosTodoPath() string {
+
+	return fmt.Sprintf("/todo/filter")
+}
+
+// Filter (lookup) todos
+func (c *Client) FilterTodosTodo(ctx context.Context, path string, payload *FilterTodoPayload, contentType string) (*http.Response, error) {
+	req, err := c.NewFilterTodosTodoRequest(ctx, path, payload, contentType)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(ctx, req)
+}
+
+// NewFilterTodosTodoRequest create the request corresponding to the filterTodos action endpoint of the todo resource.
+func (c *Client) NewFilterTodosTodoRequest(ctx context.Context, path string, payload *FilterTodoPayload, contentType string) (*http.Request, error) {
+	var body bytes.Buffer
+	if contentType == "" {
+		contentType = "*/*" // Use default encoder
+	}
+	err := c.Encoder.Encode(payload, &body, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode body: %s", err)
+	}
+	scheme := c.Scheme
+	if scheme == "" {
+		scheme = "http"
+	}
+	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
+	req, err := http.NewRequest("POST", u.String(), &body)
+	if err != nil {
+		return nil, err
+	}
+	header := req.Header
+	if contentType == "*/*" {
+		header.Set("Content-Type", "application/json")
+	} else {
+		header.Set("Content-Type", contentType)
+	}
+	return req, nil
+}
+
 // GetAllTodosTodoPath computes a request path to the getAllTodos action of todo.
 func GetAllTodosTodoPath() string {
 
@@ -116,12 +159,12 @@ func (c *Client) NewGetAllTodosTodoRequest(ctx context.Context, path string, lim
 	u := url.URL{Host: c.Host, Scheme: scheme, Path: path}
 	values := u.Query()
 	if limit != nil {
-		tmp6 := strconv.Itoa(*limit)
-		values.Set("limit", tmp6)
+		tmp7 := strconv.Itoa(*limit)
+		values.Set("limit", tmp7)
 	}
 	if offset != nil {
-		tmp7 := strconv.Itoa(*offset)
-		values.Set("offset", tmp7)
+		tmp8 := strconv.Itoa(*offset)
+		values.Set("offset", tmp8)
 	}
 	if order != nil {
 		values.Set("order", *order)

@@ -4,15 +4,129 @@ consumes:
 - application/gob
 - application/x-gob
 definitions:
+  FilterTodoPayload:
+    example:
+      filter: "1971-12-03T04:24:10Z"
+      order:
+      - direction: Placeat fugiat mollitia reiciendis.
+        property: Nostrum accusantium molestias blanditiis nam.
+      - direction: Placeat fugiat mollitia reiciendis.
+        property: Nostrum accusantium molestias blanditiis nam.
+      page: 3.3075532419454213e+18
+      pageSize: 2.4332913109882424e+18
+    properties:
+      filter:
+        description: Filter by fields key=>value
+        example: "1971-12-03T04:24:10Z"
+      order:
+        description: Sort specifications.
+        example:
+        - direction: Placeat fugiat mollitia reiciendis.
+          property: Nostrum accusantium molestias blanditiis nam.
+        - direction: Placeat fugiat mollitia reiciendis.
+          property: Nostrum accusantium molestias blanditiis nam.
+        items:
+          $ref: '#/definitions/OrderSpecs'
+        type: array
+      page:
+        description: Page number to fetch
+        example: 3.3075532419454213e+18
+        format: int64
+        type: integer
+      pageSize:
+        description: Number of items per page
+        example: 2.4332913109882424e+18
+        format: int64
+        type: integer
+    required:
+    - page
+    - pageSize
+    title: FilterTodoPayload
+    type: object
+  OrderSpecs:
+    example:
+      direction: Placeat fugiat mollitia reiciendis.
+      property: Nostrum accusantium molestias blanditiis nam.
+    properties:
+      direction:
+        description: Sort direction. One of 'asc' (ascending) or 'desc' (descenting).
+        example: Placeat fugiat mollitia reiciendis.
+        type: string
+      property:
+        description: Order by property
+        example: Nostrum accusantium molestias blanditiis nam.
+        type: string
+    title: OrderSpecs
+    type: object
+  PaginatedTodosMedia:
+    description: PaginatedTodosMedia media type (default view)
+    example:
+      items:
+      - completedAt: 1.7849052587171064e+18
+        createdAt: 5.1631909098674925e+17
+        createdBy: Id dolores ut iusto sit.
+        description: Velit sint ipsa.
+        done: true
+        id: Cumque eum.
+        title: Suscipit quibusdam explicabo et.
+      - completedAt: 1.7849052587171064e+18
+        createdAt: 5.1631909098674925e+17
+        createdBy: Id dolores ut iusto sit.
+        description: Velit sint ipsa.
+        done: true
+        id: Cumque eum.
+        title: Suscipit quibusdam explicabo et.
+      page: 2.882143528128257e+18
+      pageSize: 4.978421365317148e+18
+      total: 5.106032969635308e+18
+    properties:
+      items:
+        description: List of todos
+        example:
+        - completedAt: 1.7849052587171064e+18
+          createdAt: 5.1631909098674925e+17
+          createdBy: Id dolores ut iusto sit.
+          description: Velit sint ipsa.
+          done: true
+          id: Cumque eum.
+          title: Suscipit quibusdam explicabo et.
+        - completedAt: 1.7849052587171064e+18
+          createdAt: 5.1631909098674925e+17
+          createdBy: Id dolores ut iusto sit.
+          description: Velit sint ipsa.
+          done: true
+          id: Cumque eum.
+          title: Suscipit quibusdam explicabo et.
+        items:
+          $ref: '#/definitions/TodoMedia'
+        type: array
+      page:
+        description: Current page number
+        example: 2.882143528128257e+18
+        format: int64
+        type: integer
+      pageSize:
+        description: Number of items per page
+        example: 4.978421365317148e+18
+        format: int64
+        type: integer
+      total:
+        description: Total number of items
+        example: 5.106032969635308e+18
+        format: int64
+        type: integer
+    title: 'Mediatype identifier: paginatedtodosmedia; view=default'
+    type: object
   TodoMedia:
     description: TodoMedia media type (default view)
     example:
       completedAt: 1.7849052587171064e+18
       createdAt: 5.1631909098674925e+17
-      description: Id dolores ut iusto sit.
+      createdBy: Id dolores ut iusto sit.
+      description: Velit sint ipsa.
       done: true
-      id: Sint ipsa.
-      title: Et cumque eum ut suscipit.
+      id: Cumque eum.
+      title: Suscipit quibusdam explicabo et.
     properties:
       completedAt:
         example: 1.7849052587171064e+18
@@ -22,37 +136,39 @@ definitions:
         example: 5.1631909098674925e+17
         format: int64
         type: integer
-      description:
+      createdBy:
         example: Id dolores ut iusto sit.
+        type: string
+      description:
+        example: Velit sint ipsa.
         type: string
       done:
         example: true
         type: boolean
       id:
-        example: Sint ipsa.
+        example: Cumque eum.
         type: string
       title:
-        example: Et cumque eum ut suscipit.
+        example: Suscipit quibusdam explicabo et.
         type: string
     required:
     - id
     - createdAt
-    - done
     title: 'Mediatype identifier: application/json; view=default'
     type: object
   TodoPayload:
     description: Todo payload
     example:
-      description: Explicabo et.
-      title: Enim placeat et culpa sed minus.
+      description: Sed minus.
+      title: Et reprehenderit officia aut.
     properties:
       description:
         description: Todo description
-        example: Explicabo et.
+        example: Sed minus.
         type: string
       title:
         description: Todo title
-        example: Enim placeat et culpa sed minus.
+        example: Et reprehenderit officia aut.
         type: string
     required:
     - title
@@ -62,21 +178,21 @@ definitions:
   TodoUpdatePayload:
     description: Todo update payload
     example:
-      description: Et reprehenderit officia aut.
-      done: true
-      title: Deserunt ad placeat.
+      description: Eum dolores dolore similique soluta officiis.
+      done: false
+      title: Fuga soluta.
     properties:
       description:
         description: Todo description
-        example: Et reprehenderit officia aut.
+        example: Eum dolores dolore similique soluta officiis.
         type: string
       done:
         description: Todo status
-        example: true
+        example: false
         type: boolean
       title:
         description: Todo title
-        example: Deserunt ad placeat.
+        example: Fuga soluta.
         type: string
     title: TodoUpdatePayload
     type: object
@@ -354,6 +470,37 @@ paths:
       schemes:
       - http
       summary: getAllTodos todo
+      tags:
+      - todo
+  /todo/filter:
+    post:
+      description: Filter (lookup) todos
+      operationId: todo#filterTodos
+      parameters:
+      - in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/FilterTodoPayload'
+      produces:
+      - application/vnd.goa.error
+      - paginatedtodosmedia
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/PaginatedTodosMedia'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/error'
+      schemes:
+      - http
+      summary: filterTodos todo
       tags:
       - todo
 produces:
