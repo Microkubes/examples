@@ -22,7 +22,6 @@ var _ = Resource("todo", func() {
 		Routing(POST("/add"))
 		Payload(TodoPayload)
 		Response(Created, TodoMedia)
-		Response(NotFound, ErrorMedia)
 		Response(BadRequest, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
@@ -40,9 +39,7 @@ var _ = Resource("todo", func() {
 			Param("offset", Integer, "number of todos to skip")
 		})
 		Response(OK)
-		Response(NotFound, ErrorMedia)
 		Response(BadRequest, ErrorMedia)
-		Response(InternalServerError, ErrorMedia)
 	})
 
 	Action("getById", func() {
@@ -53,7 +50,6 @@ var _ = Resource("todo", func() {
 		})
 		Response(OK, TodoMedia)
 		Response(NotFound, ErrorMedia)
-		Response(BadRequest, ErrorMedia)
 		Response(InternalServerError, ErrorMedia)
 	})
 

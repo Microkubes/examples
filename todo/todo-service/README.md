@@ -12,7 +12,7 @@ To install the microservice, first you have to build an image with Docker:
 docker build -t microkubes/microservice-todo .
 ```
 
-Then in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [docker-compose.fullstack.yml](https://github.com/Microkubes/microkubes/blob/master/docker/docker-compose.fullstack.yml) file,
+Then, in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [docker-compose.fullstack.yml](https://github.com/Microkubes/microkubes/blob/master/docker/docker-compose.fullstack.yml) file,
 add the `microservice-todo` service:
 
 ```

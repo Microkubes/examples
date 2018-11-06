@@ -34,9 +34,6 @@ func (c *TodosController) GetByID(ctx *app.GetByIDTodoContext) error {
 	res, err := c.TodoStore.DBGetByID(ctx.TodoID)
 
 	if err != nil {
-		if errors.IsErrInvalidInput(err) {
-			return ctx.BadRequest(goa.ErrBadRequest(err.Error()))
-		}
 
 		if errors.IsErrNotFound(err) {
 			return ctx.NotFound(goa.ErrNotFound(err.Error()))
@@ -151,18 +148,11 @@ func (c *TodosController) GetAllTodos(ctx *app.GetAllTodosTodoContext) error {
 	if ctx.Sorting != nil {
 		sorting = *ctx.Sorting
 	}
-
 	todos, err := c.TodoStore.DBGetAllTodos(order, sorting, limit, offset)
 	if err != nil {
 		if errors.IsErrInvalidInput(err) {
 			return ctx.BadRequest(goa.ErrBadRequest(err.Error()))
 		}
-
-		if errors.IsErrNotFound(err) {
-			return ctx.NotFound(goa.ErrNotFound(err.Error()))
-		}
-
-		return ctx.InternalServerError(goa.ErrInternal(err.Error()))
 	}
 
 	return ctx.OK(todos)
