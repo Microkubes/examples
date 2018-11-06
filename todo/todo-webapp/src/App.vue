@@ -1,10 +1,10 @@
 <template>
   <div id="app">
-    <router-link to="/">Home</router-link> |
-    <router-link to="/list">List</router-link> |
-    <router-link to="/login">Login</router-link>
+    <router-link to="/" class="link">Home</router-link> |
+    <router-link to="/list" class="link">List</router-link> |
+    <router-link to="/login" class="link">Login</router-link>
     <br/>
-    <img src="./assets/logo.png">
+    <img src="./assets/logo.png" class="logo">
     <router-view/>
   </div>
 </template>
@@ -23,5 +23,15 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.logo {
+  height: 70px;
+}
+
+.link {
+  font-size: 40px;
+  text-decoration: none;
+  margin: 10px;
 }
 </style>
