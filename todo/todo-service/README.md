@@ -12,7 +12,7 @@ To install the microservice, first you have to build an image with Docker:
 docker build -t microkubes/microservice-todo .
 ```
 
-Then in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [docker-compose.fullstack.yml](https://github.com/Microkubes/microkubes/blob/master/docker/docker-compose.fullstack.yml) file,
+Then, in the [microkubes](https://github.com/Microkubes/microkubes) repo, in the       [docker-compose.fullstack.yml](https://github.com/Microkubes/microkubes/blob/master/docker/docker-compose.fullstack.yml) file,
 add the `microservice-todo` service:
 
 ```
@@ -91,3 +91,7 @@ Once the database has been setup, a `TodosService` can be instatiated using the 
 ### Controller
 
 After bootstraping the microservice using `goagen`, it will autogenerate a file, in this case `todo.go`, which acts as a controller for the API. For all actions defined in `design/design.go` it will create empty functions in `todo.go` ready to be implemented. For instance, for the `addTodo` action in `design/design.go`, it will create a function `AddTodo`. The functions defined in `db/store.go` should be called respectively inside all functions in `todo.go`.
+
+### Tests
+
+To run the tests for the backend type `go test -v`.
