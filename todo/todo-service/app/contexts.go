@@ -53,14 +53,6 @@ func (ctx *AddTodoTodoContext) BadRequest(r error) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
-// NotFound sends a HTTP response with status code 404.
-func (ctx *AddTodoTodoContext) NotFound(r error) error {
-	if ctx.ResponseData.Header().Get("Content-Type") == "" {
-		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	}
-	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
-}
-
 // InternalServerError sends a HTTP response with status code 500.
 func (ctx *AddTodoTodoContext) InternalServerError(r error) error {
 	if ctx.ResponseData.Header().Get("Content-Type") == "" {
@@ -250,22 +242,6 @@ func (ctx *GetAllTodosTodoContext) BadRequest(r error) error {
 	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
-// NotFound sends a HTTP response with status code 404.
-func (ctx *GetAllTodosTodoContext) NotFound(r error) error {
-	if ctx.ResponseData.Header().Get("Content-Type") == "" {
-		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	}
-	return ctx.ResponseData.Service.Send(ctx.Context, 404, r)
-}
-
-// InternalServerError sends a HTTP response with status code 500.
-func (ctx *GetAllTodosTodoContext) InternalServerError(r error) error {
-	if ctx.ResponseData.Header().Get("Content-Type") == "" {
-		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	}
-	return ctx.ResponseData.Service.Send(ctx.Context, 500, r)
-}
-
 // GetByIDTodoContext provides the todo getById action context.
 type GetByIDTodoContext struct {
 	context.Context
@@ -297,14 +273,6 @@ func (ctx *GetByIDTodoContext) OK(r *TodoMedia) error {
 		ctx.ResponseData.Header().Set("Content-Type", "application/json")
 	}
 	return ctx.ResponseData.Service.Send(ctx.Context, 200, r)
-}
-
-// BadRequest sends a HTTP response with status code 400.
-func (ctx *GetByIDTodoContext) BadRequest(r error) error {
-	if ctx.ResponseData.Header().Get("Content-Type") == "" {
-		ctx.ResponseData.Header().Set("Content-Type", "application/vnd.goa.error")
-	}
-	return ctx.ResponseData.Service.Send(ctx.Context, 400, r)
 }
 
 // NotFound sends a HTTP response with status code 404.

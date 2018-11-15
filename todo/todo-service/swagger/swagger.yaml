@@ -256,10 +256,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TodoMedia'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
         "404":
           description: Not Found
           schema:
@@ -409,10 +405,6 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/error'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/error'
         "500":
           description: Internal Server Error
           schema:
@@ -457,14 +449,6 @@ paths:
           description: OK
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/error'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/error'
-        "500":
-          description: Internal Server Error
           schema:
             $ref: '#/definitions/error'
       schemes:
