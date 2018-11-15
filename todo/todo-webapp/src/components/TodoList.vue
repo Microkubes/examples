@@ -41,6 +41,7 @@ export default {
     }
   },
   methods: {
+    //Adds new todo
     addTodo: function() {
       if(this.$data.selectedTodo===null) {
         axios.post('http://127.0.0.1:8000/todo/add', {
@@ -52,6 +53,7 @@ export default {
         console.log(response);        
         });
       } else {
+        //Updates an existing todo
          var self = this;
         //var index = this.$data.todoList.indexOf(this.$data.selectedTodo);
         axios.put('http://127.0.0.1:8000/todo/'+ this.$data.selectedTodo.id, {
@@ -93,6 +95,7 @@ export default {
     //   }
     // },
 
+    //Deleted a todo
     deleteTodo: function(todo) {
       var self = this;
       axios.delete('http://127.0.0.1:8000/todo/'+todo.id+'/delete').then(function(response){
@@ -102,6 +105,7 @@ export default {
 self.$data.todoList.splice(self.$data.todoList.indexOf(todo), 1);    console.log(error);
   });
     },
+    //Lists all todos
     showTodo: function(todo) {
       this.$data.title = todo.title;
       this.$data.description = todo.description;
