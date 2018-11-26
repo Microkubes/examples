@@ -34,6 +34,16 @@ npm run unit
 npm test
 ```
 
+#### Enable CORS
+Due to communicating on different hosts, Cross-origin resource sharing (CORS) should be enabled on Kong and on ```jwt-issuer``` with this command:
+```
+curl -X POST http://localhost:8001/apis/{service_id}/plugins \
+    --data "name=cors" \
+    --data "config.origins=*" \  
+    --data "config.methods=GET, POST, DELETE"\
+    --data "config.max_age=3600"
+```
+
 #### Vue.js
 Vue.js is an open-source JavaScript framework for building user interfaces. Vue can also function as a web application framework capable of powering advanced single-page applications. It features an incrementally adoptable architecture.
 ##### Webpack
