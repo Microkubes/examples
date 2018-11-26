@@ -36,16 +36,21 @@ export default {
   methods: {
     //Logs in a user and stores its token 
     login: function() {
+      var form = new FormData();
       var self = this;
-      axios.post('http://127.0.0.1:8000/jwt/signin', {
-          email: this.$data.email,
-          password: this.$data.password
-           }).then(function(response) {
-              window.localStorage.setItem('token',response.data.token);
-              // router.push('List');
-           console.log(response);
 
-        });
+      axios({
+        method: 'post',
+        url: 'http://localhost:8000/jwt/signin',
+        data: 'email='+this.$data.email+'&password='+this.$data.password+'&scope=read,write',
+        headers: {
+        }
+      }).then(function(response){
+        console.log(self.$router);
+        window.localStorage.setItem('token', response.data);
+        self.$router.push({name: "List"}); 
+        console.log('aaaa');
+      });
     }
   },
 }

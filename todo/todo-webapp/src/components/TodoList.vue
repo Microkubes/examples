@@ -16,11 +16,11 @@
   <el-button type="primary" @click="addTodo" v-if="selectedTodo===null">Add</el-button>
   </el-form-item>
   </el-form>
-  <ul>
+  <ol>
     <li v-for="todo in todoList"><b @click="showTodo(todo)">{{todo.title}}</b> <small>{{todo.description}}</small>
     <el-button @click="deleteTodo(todo)" class="btn">X</el-button>
     </li>
-  </ul>
+  </ol>
 </el-col>
 <el-col :span="8">
 </el-col>
@@ -43,20 +43,20 @@ export default {
   methods: {
     //Adds new todo
     addTodo: function() {
+         var self = this;
       if(this.$data.selectedTodo===null) {
-        axios.post('http://127.0.0.1:8000/todo/add', {
+        axios.post('http://localhost:8000/todo/add', {
           title: this.$data.title,
           description: this.$data.description,
           done: false
         }).then(function(response) {
-        //this.$data.todoList.push(response.data);
+        self.$data.todoList.push(response.data);
         console.log(response);        
         });
       } else {
+
         //Updates an existing todo
-         var self = this;
-        //var index = this.$data.todoList.indexOf(this.$data.selectedTodo);
-        axios.put('http://127.0.0.1:8000/todo/'+ this.$data.selectedTodo.id, {
+        axios.put('http://localhost:8000/todo/'+ this.$data.selectedTodo.id, {
           id: this.$data.selectedTodo.id,
           title: this.$data.title,
           description: this.$data.description          
@@ -64,47 +64,27 @@ export default {
 
           console.log(response);
 
-          self.$data.todoList.splice(self.$data.todoList.indexOf(self.$data.selectedTodo), 1);
+          self.$data.todoList.splice(self.$data.todoList.indexOf(self.$data.selectedTodo), 1, response.data);
+          
           self.$data.selectedTodo = null;
           self.$data.title = '';
           self.$data.description = '';
-          // console.log(self.$data.todoList);
-
         });     
       }
     },
 
-    // addTodo: function() {
-    //   if(this.$data.selectedTodo===null) {
-    //     this.$data.todoList.push({
-    //       // id: this.$data.todo.length+1,
-    //       title: this.$data.title,
-    //       description: this.$data.description
-    //     });        
-    //   } else {
-    //     //var index = this.$data.todoList.indexOf(this.$data.selectedTodo);
-    //     this.$data.todoList.splice(this.$data.todoList.indexOf(this.$data.selectedTodo), 1, {
-    //       id: this.$data.selectedTodo.id,
-    //       title: this.$data.title,
-    //       description: this.$data.description          
-    //     });
-    //     this.$data.selectedTodo = null;
-    //     this.$data.title = '';
-    //     this.$data.description = '';
-    //     console.log(this.$data.todoList);
-    //   }
-    // },
-
-    //Deleted a todo
+    //Delete a todo
     deleteTodo: function(todo) {
       var self = this;
-      axios.delete('http://127.0.0.1:8000/todo/'+todo.id+'/delete').then(function(response){
+      axios.delete('http://localhost:8000/todo/'+todo.id+'/delete').then(function(response){
         self.$data.todoList.splice(self.$data.todoList.indexOf(todo), 1);
       }) 
       .catch(function (error) {
-self.$data.todoList.splice(self.$data.todoList.indexOf(todo), 1);    console.log(error);
+      self.$data.todoList.splice(self.$data.todoList.indexOf(todo), 1);    
+      console.log(error);
   });
     },
+
     //Lists all todos
     showTodo: function(todo) {
       this.$data.title = todo.title;
@@ -115,7 +95,7 @@ self.$data.todoList.splice(self.$data.todoList.indexOf(todo), 1);    console.log
   mounted: function() {
     var self = this;
 
-    axios.get('http://127.0.0.1:8000/todo/all')
+    axios.get('http://localhost:8000/todo/all')
       .then(function (response) {
         // handle success
         self.$data.todoList = response.data;

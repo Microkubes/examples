@@ -5,7 +5,7 @@
 // Command:
 // $ goagen
 // --design=github.com/Microkubes/examples/todo/todo-service/design
-// --out=$(GOPATH)/src/github.com/Microkubes/examples/todo/todo-service
+// --out=$(GOPATH)src/github.com/Microkubes/examples/todo/todo-service
 // --version=v1.3.1
 
 package app
@@ -185,8 +185,8 @@ func handleTodoOrigin(h goa.Handler) goa.Handler {
 			rw.Header().Set("Access-Control-Allow-Credentials", "false")
 			if acrm := req.Header.Get("Access-Control-Request-Method"); acrm != "" {
 				// We are handling a preflight request
-				rw.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS")
-				rw.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers")
+				rw.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS, POST, DELETE, PATCH")
+				rw.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 			}
 			return h(ctx, rw, req)
 		}
