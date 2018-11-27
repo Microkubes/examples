@@ -7,10 +7,10 @@
   <el-alert v-if="loginError" v-bind:title="loginErrorMessage" type="error"></el-alert>
   <el-form ref="form" :model="form" label-width="120px">
   <el-form-item label="Email">
-    <el-input placeholder="Please input" v-model="form.email"></el-input>
+    <el-input placeholder="Please input" v-model="email"></el-input>
   </el-form-item>
   <el-form-item label="Password">
-    <el-input placeholder="Please input" type="password" v-model="form.password"></el-input>
+    <el-input placeholder="Please input" type="password" v-model="password"></el-input>
 </el-form-item>
   <el-form-item>
   <el-button type="primary" @click="login">Login</el-button>
@@ -24,31 +24,35 @@
 </template>
 
 <script>
-import axios from 'axios'
+import axios from '../helpers/axios'
 
 export default {
   data() {
     return {
-      form: {
         email: '',
         password: ''
-      },
-      loginError: false,
-      loginErrorMessage: ''
-    }
+      }
   },
   methods: {
+    //Logs in a user and stores its token 
     login: function() {
-      var vm = this
-      this.$auth.login(this.$data.form, 'home').then((error) => {
-        console.log(error)
-        if (error) {
-          vm.loginError = true
-          vm.loginErrorMessage = error.response.data
+      var form = new FormData();
+      var self = this;
+
+      axios({
+        method: 'post',
+        url: 'http://localhost:8000/jwt/signin',
+        data: 'email='+this.$data.email+'&password='+this.$data.password+'&scope=read,write',
+        headers: {
         }
-      })
+      }).then(function(response){
+        console.log(self.$router);
+        window.localStorage.setItem('token', response.data);
+        self.$router.push({name: "List"}); 
+        console.log('aaaa');
+      });
     }
-  }
+  },
 }
 
 </script>
