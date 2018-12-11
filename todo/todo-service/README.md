@@ -56,7 +56,7 @@ The microservice-todo is built using Go, and it uses the following libraries and
 - [Goa](https://github.com/goadesign/goa)
 - [microservice-tools](https://github.com/Microkubes/microservice-tools)
 - [microservice-security](https://github.com/Microkubes/microservice-security)
-- [backends](https://github.com/JormungandrK/backends)
+- [backends](https://github.com/Microkubes/backends)
 
 #### Goa
 

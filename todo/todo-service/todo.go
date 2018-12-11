@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/JormungandrK/backends"
-	errors "github.com/JormungandrK/backends"
+	"github.com/Microkubes/backends"
+	errors "github.com/Microkubes/backends"
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/config"
 	"github.com/Microkubes/examples/todo/todo-service/db"

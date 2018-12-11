@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/JormungandrK/backends"
+	"github.com/Microkubes/backends"
 	"github.com/Microkubes/examples/todo/todo-service/app"
 	"github.com/Microkubes/examples/todo/todo-service/config"
 	"github.com/Microkubes/examples/todo/todo-service/db"
