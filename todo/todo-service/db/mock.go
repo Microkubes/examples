@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	errors "github.com/JormungandrK/backends"
+	errors "github.com/Microkubes/backends"
 	"github.com/goadesign/goa"
 )
 
